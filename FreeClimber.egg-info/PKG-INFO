@@ -1,0 +1,17 @@
+Metadata-Version: 2.1
+Name: FreeClimber
+Version: 0.3
+Summary: A background-adjusted, particle detector used to quantify climbing performance for groups of Drosophila in a negative geotaxis assay
+Home-page: http://github.com/adamspierer/FreeClimber
+Author: Adam Spierer
+Author-email: anspierer+Github_setup_py@gmail.com
+License: MIT
+Description: # FreeClimber
+        
+Keywords: Drosophila climbing negative geotaxis background subtraction particle detection local linear regression
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.7
+Description-Content-Type: text/markdown

@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+setup.py
+FreeClimber/DectFrame.py
+FreeClimber/FreeClimber_gui.py
+FreeClimber/FreeClimber_main.py
+FreeClimber/__init__.py
+FreeClimber/argparse_test.py
+FreeClimber/detector.py
+FreeClimber.egg-info/PKG-INFO
+FreeClimber.egg-info/SOURCES.txt
+FreeClimber.egg-info/dependency_links.txt
+FreeClimber.egg-info/not-zip-safe
+FreeClimber.egg-info/requires.txt
+FreeClimber.egg-info/top_level.txt
