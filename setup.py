@@ -34,6 +34,7 @@ setup(name='FreeClimber',
 
       packages=setuptools.find_packages(),
       packages=['FreeClimber'],
-      install_requires=['os','sys','argparse','ffmpeg==0.2.0','subprocess','time','pandas','numpy','scipy',
-                        'pip','matplotlib==3.1.3','wxPython==4.0.4','trackpy==0.4.2'],
+      install_requires=['os','sys','argparse','ffmpeg==0.2.0','subprocess','time',
+                        'pandas','numpy','scipy','pip','matplotlib==3.1.3',
+                        'wxPython==4.0.4','trackpy==0.4.2'],
       zip_safe=False)
