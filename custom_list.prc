@@ -1,4 +1,0 @@
-/Users/aspierer/Manuscripts/climbing/vial_detector/examples/noisy_background_few_flies/noisy_background_few_flies.h264 
-/Users/aspierer/Manuscripts/climbing/vial_detector/examples/clean_background_many_flies/clean_background_many_flies.h264 
-/Users/aspierer/Manuscripts/climbing/vial_detector/examples/clean_background_few_flies/clean_background_few_flies.h264 
-/Users/aspierer/Manuscripts/climbing/vial_detector/examples/clean_background_different_flies/clean_background_different_flies.h264 
