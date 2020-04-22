@@ -6,7 +6,7 @@ with open('README.md','r') as f:
 
 setup(name='FreeClimber',
       version='0.3',
-      description='A background-adjusted, particle detector used to quantify climbing performance for groups of Drosophila in a negative geotaxis assay',
+      description='FreeClimber is a Python-based background subtraction, particle detector used to estimate the velocity for a group of particles moving from the bottom to the top of an image, using a local linear regression.',
       long_description=long_description,
       long_description_content_type="text/markdown",
       url='http://github.com/adamspierer/FreeClimber',

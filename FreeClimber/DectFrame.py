@@ -16,7 +16,7 @@ import matplotlib.cm as cm
 import matplotlib.pyplot as plt
 
 from detector import detector
-import vial_detector_main
+import FreeClimber_main
 
 print('')
 
