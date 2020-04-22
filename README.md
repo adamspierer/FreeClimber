@@ -1,14 +1,23 @@
-<h1>FreeClimber -- Python 3</h1>
+<h1>FreeClimber</h1>
+-
 
 <h3>Overview</h3>
 
-`FreeClimber` is a Python-based, particle detection algorithm used for quantifying the climbing speed for a group of flies. This platform has several advantages over current methods. First, its 's advantages include its use of a background subtraction step to clean otherwise noisy backgrounds, as well as a sliding window to calculate the most linear portion of a mean y-position vs. time curve to find the most accurate representation of a cohort's climbing velocity. This gif is a good demonstration of that, where the most linear increase in position over a 2-second window is blue--with an accompanying dashed line of best fit--while the remaining points are red. 
+`FreeClimber` is a Python 3-based, background-subtracting particle detection algorithm that performs a local linear regression to quantify the vertical velocity of points moving in a common direction. 
 
-<img src="https://github.com/adamspierer/vial_detector/blob/python3/supplemental/tutorial_0.gif" width="600" height="200" align="center">
+<img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/tutorial_0.gif" width="600" height="200" align="center">
 
-While this platform is most useful for quantifying a negative geotaxis (climbing) assay with Drosophila, it can be used for any video with a static background, and where the particles are of approximately uniform size and traveling from the bottom of the frame to the top.
- 
+In lay terms:
 
+- **Backgroud-subtracting**: Removes background pixels that do not change in a set range of frames over a video.
+
+- **Particle detection**: Identifies the x,y-coordinates of each spot/point/marker by frame/time. 
+
+- **Local linear regression**: Finds the most linear segment of a position vs. time (velocity) curve by testing for the greatest regression coefficient over a subset of consecutive frames.
+
+- **Vertical velocity**: Slope of the most linear segment of the velocity curve, which corresponds with the most consistent increase in mean vertical position across n-frames.
+
+This program was designed initially for assessing climbing performance in a *Drosophila* (fruit fly) [rapid iterative negative geotaxis (RING) assay](https://www.sciencedirect.com/science/article/pii/S0531556505000343?casa_token=E8QE2aYrEwoAAAAA:MNa-Wc8BeOXMvmlNuj-b4tH2cMQFuI1ZfUt8qZm0IRY8Qe88xOvw0em07UpwkNqh0QBIPbNZikY). However, this program employs several functions that may be of use beyond the initial design and can be accessed from the source code. This program includes a Graphical User Interface (GUI) for optimizing parameter configurations, and a command line interface for batch processing. This platform has several advantages over over methods and circumvents systemic biases associated with manual methods that are traditionally used to quantify climbing performance in flies.
 
 <h3>Requirements</h3>
 
@@ -22,27 +31,61 @@ While this platform is most useful for quantifying a negative geotaxis (climbing
     - trackpy    [0.4.2 ]
     - wxPython   [4.0.4 ]
 
-NOTE: This platform was developed using Python 3.7.6, and while untested, earlier versions of Python 3 will likely work as well.
+NOTE: This platform was developed using Python 3.7.6, and also tested in a Python 3.6 environment. Earlier Python 3 versions will likely work as well but are untested.
 
 <h3>Installing</h3>
-<ol><li>We recommend running this package in an Anaconda [download](https://docs.anaconda.com/anaconda/install/) virtual environment running Python 3 [how to](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/).</li>
 
-<li>The aforementioned requirements can be downloaded using conda:
-```conda install -c adamspierer freeclimber```
-or PyPi:
-```pip install FreeClimber```</li>
+We recommend running this package in an Anaconda-based virtual environment. Anaconda can be downloaded [here](https://docs.anaconda.com/anaconda/install/).
 
-<ul><li>NOTE: Some systems may have issues with dependencies in a Python 3.7 virtual environment, so we recommend a Python 3.6 environment if this is the case.</li></ul>
+**Make sure `conda` is installed** (should return something like `conda 4.7.11`):
 
-<li>Clone the git repository, or simply download the files with the `.py` suffix to a single folder.</li></ol>
+	conda -V 
+
+**Update conda if needed** (press `y` when prompted):
+
+	conda update conda
+
+**Create a Python 3 virtual environment** (replace `python36` with your name of choice):
+	
+	conda create -n python36 python=3.6 anaconda
+
+*NOTE: See note above about Python 3.6 vs. 3.7..*
+
+**Activate your virtual environment**:
+
+	conda activate python36
+	
+**OR** (if that doesn't work):
+
+	source activate python36
+
+For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
+
+**Using `conda`**:
+
+	conda install -c adamspierer freeclimber
+
+**Using PyPi**: 
+
+	pip install FreeClimber
+
+**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder.
+
+**Cloning the git repository**:
+
+	cd <folder of interest>
+	git clone https://github.com/adamspierer FreeClimber.git
+	
+NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
+
 
 <h3>Test files</h3>
 
 There are three different sets of video files in the `test` folder to demonstrate varying conditions.
 
-| clean_background | diff_number_flies | noisy_background | 
+| `clean_background` | `diff_number_flies` | `noisy_background` | 
 | --- |---| ---|
-| <img src="https://github.com/adamspierer/vial_detector/blob/python3/supplemental/example_images/clean_setup.jpg" width="366" height="200">       | <img src="https://github.com/adamspierer/vial_detector/blob/python3/supplemental/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="https://github.com/adamspierer/vial_detector/blob/python3/supplemental/example_images/noisy_background.png" width="366" height="200">  |
+| <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/clean_setup.jpg" width="366" height="200">       | <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/noisy_background.png" width="366" height="200">  |
 
     - clean_background: contains three vials of 9 flies per vial set on visually clean background
     - diff_number_flies: contains six vials with 5, 10, 19, 23, 15, 33 flies per vial set on visually clean background
@@ -50,61 +93,62 @@ There are three different sets of video files in the `test` folder to demonstrat
 
 <h3>Usage</h3>
 
-Navigate to the `FreeClimber` directory:
+The following is a general overview of the platform usage. For detailed instructions, please see our [tutorial page] (tutorial_page).
 
-```cd <path_to_FreeClimber_scripts>```
+Navigate to the directory containing the `FreeClimber` `.py` scripts:
 
-To run the GUI, navigate to working folder and type:
+	cd <path_to_FreeClimber_scripts>
 
-    ```pythonw FreeClimber_gui.py <optional: path_to_video_file>```
+**To run the GUI** (`pythonw` is different from `python`):
+
+    pythonw FreeClimber_gui.py <optional: path_to_video_file>
 
 --> Optional argument will take a video file path and automatically load it. Leaving this blank will cause a dialog box to open for the user to search for a video to load.
 
-To run from the command line, navigate to the working folder and type:
+**To run from the command line**:
 
-    ```python FreeClimber_main.py <path_to_configuration_file.cfg> <optional: False>```
-
---> A required `<file>.cfg` is needed to run the command line tool. This file is generated by the GUI, or can be modified from the provided example file. The program will process all files with the specified file suffix (ex. h264, mov, avi) in the `path_project` folder.
-
-We provide a more complete tutorial on how to run this program: https://github.com/adamspierer/vial_detector/blob/python3/supplemental/Tutorial.md
+    python FreeClimber_main.py <path_to_configuration_file.cfg> 
+    
+--> A required `<file>.cfg` is needed to run the command line tool. This file is generated by the GUI, or can be modified from the provided example file. The program will find all specified video files of a common type (`file_suffix`) that are nested within the specified parent folder (`project_path`). 
 
 <h3>Code Structure/Overview</h3>
 
-`FreeClimber_gui.py` - Sets up the GUI object
+`DectFrame.py` -  GUI-specific functions and placement of GUI objects.
 
-`DectFrame.py` - Organizes and formats the GUI
+`FreeClimber_gui.py` - Calls the GUI object.
 
-`detector.py` - Contains the *detector* object, which is important for parsing the video file into a multi-dimensional numpy array (ndarray) and all the functions needed to get the data out.
+`FreeClimber_main.py` - Main script that the GUI and command line interface both run through.
 
-`FreeClimber_main.py` - This is the main script; while takes in a configuration file with the necessary detection parameters and processes videos.
+`detector.py` - Contains the detector object, which is important for parsing the video file into a multi-dimensional numpy array (ndarray) and all the functions needed to get the data out.
 
-`example.cfg` - A configuration file generated by the GUI or modified by the user. It contains the detection parameters needed to run the program.
+`example.cfg` - A configuration file generated by the GUI or modified by the user from the provided example. It contains the detection parameters needed to run the program.
 
-`video_file.suffix` - A video file to read in. Currently works with most common movie formats (pre-approved suffixes include: .flv, .h264, .mov, .mp4, .wmv, and more). There is a known issue with .avi, so convert to a different format using:
+`video_file.suffix` - A video file (not image stack) to read in. Unsupported file formats can be converted using [FFmpeg](https://www.ffmpeg.org/), a well-documented multimedia editing platform.
 
-```ffmpeg -i <your_file>.avi -c copy <your_file>.<pre-approved suffix>```
-
-We encourage you to to visit our [Tutorial page]('https://github.com/adamspierer/vial_detector/blob/python3/supplemental/Tutorial.md') to explore this program further.
-
+We encourage you to to visit our [Tutorial page]('https://github.com/adamspierer/vial_detector/blob/python3/supplemental/Tutorial.md') for a more thorough walk-through, description, and various caveats.
 
 <h3>Deployment</h3>
 
-This software has only been tested on a Mac OS X (Sierra 10.12.6).
+This software has only been tested on a Mac OS X (Sierra 10.12.6) but is likely not limited to this OS.
 
 
 <h3>Contributing</h3>
 
-This will be the only release of this program.
+
 
 
 <h3>Release History</h3>
 
-This will be the only release of this program.
+We plan to release maintenance updates as needed, though we are unlikely to modify the platform's main functionality.
 
 
 <h3>Citing this work</h3>
-<Citation for this paper>
+The manuscript associated with this platform is in the end stages of revision or in the review process. Please contact the authors directly for how to cite this work.
+
+<h3>License</h3>
+
+This work is licensed under the MIT license.
 
 <h3>Authors</h3>
 
-Written by Adam Spierer and Lei Zhuo with special thanks to Brown University's Computational Biology Core for assistance with code review.
+Written by [Adam Spierer](https://github.com/adamspierer) and [Lei Zhuo](https://github.com/ctzhu/) with special thanks to Brown University's [Computational Biology Core](https://github.com/compbiocore/) for assistance with code review.
