@@ -5,7 +5,7 @@
 
 `FreeClimber` is a Python 3-based, background-subtracting particle detection algorithm that performs a local linear regression to quantify the vertical velocity of points moving in a common direction. 
 
-<img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/tutorial_0.gif" width="600" height="200" align="center">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/tutorial_0.gif" width="600" height="200" align="center">
 
 In lay terms:
 
@@ -85,7 +85,7 @@ There are three different sets of video files in the `test` folder to demonstrat
 
 | `clean_background` | `diff_number_flies` | `noisy_background` | 
 | --- |---| ---|
-| <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/clean_setup.jpg" width="366" height="200">       | <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="/Users/aspierer/Manuscripts/climbing/FreeClimber/z/example_images/noisy_background.png" width="366" height="200">  |
+| <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/clean_setup.jpg" width="366" height="200">       | <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/noisy_background.png" width="366" height="200">  |
 
     - clean_background: contains three vials of 9 flies per vial set on visually clean background
     - diff_number_flies: contains six vials with 5, 10, 19, 23, 15, 33 flies per vial set on visually clean background
