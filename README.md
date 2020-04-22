@@ -28,9 +28,9 @@ NOTE: This platform was developed using Python 3.7.6, and while untested, earlie
 <ol><li>We recommend running this package in an Anaconda [download](https://docs.anaconda.com/anaconda/install/) virtual environment running Python 3 [how to](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/).</li>
 
 <li>The aforementioned requirements can be downloaded using conda:
-`conda install -c adamspierer freeclimber`
+```conda install -c adamspierer freeclimber```
 or PyPi:
-`pip install FreeClimber`</li>
+```pip install FreeClimber```</li>
 
 <ul><li>NOTE: Some systems may have issues with dependencies in a Python 3.7 virtual environment, so we recommend a Python 3.6 environment if this is the case.</li></ul>
 
