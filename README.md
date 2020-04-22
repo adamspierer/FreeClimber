@@ -134,7 +134,7 @@ This software has only been tested on a Mac OS X (Sierra 10.12.6) but is likely 
 
 <h3>Contributing</h3>
 
-
+Contributors can fork from the repository and submit a pull request when modifications are ready. Please document the changes you made and any pertinent information that will help in our review of the changes.
 
 
 <h3>Release History</h3>
