@@ -74,7 +74,7 @@ For more details about creating a conda virtual environment, see [here](https://
 **Cloning the git repository**:
 
 	cd <folder of interest>
-	git clone https://github.com/adamspierer FreeClimber.git
+	git clone https://github.com/adamspierer/FreeClimber.git
 	
 NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
 
@@ -86,6 +86,7 @@ There are three different sets of video files in the `test` folder to demonstrat
 | `clean_background` | `diff_number_flies` | `noisy_background` | 
 | --- |---| ---|
 | <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/clean_setup.jpg" width="366" height="200">       | <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/noisy_background.png" width="366" height="200">  |
+| clean_background: contains three vials of 9 flies per vial set on visually clean background | diff_number_flies: contains six vials with 5, 10, 19, 23, 15, 33 flies per vial set on visually clean background | noisy_background: small, noisy background with low resolution. This example is meant to illustrate how the platform can be configured to work with sub-optimal backgrounds, though better videos yield better results. |
 
     - clean_background: contains three vials of 9 flies per vial set on visually clean background
     - diff_number_flies: contains six vials with 5, 10, 19, 23, 15, 33 flies per vial set on visually clean background
