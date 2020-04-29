@@ -2,114 +2,190 @@
 
 <h3>Overview</h3>
 
-This tutorial will walk you through how to use the `free_climber` platform. As of now, you must specify the path to the `free_climber` script you want to run, rather than running from a module. The goal is to make this all a module moving forward, but for this stage in development here's what I've got...
+`FreeClimber` was originally designed to quantify the clmimbing velocity of fruit flies in a negative geotaxis assay. This program can also be co-opted for subtracting the static background of a video, as well as particle detection of other videos where points of uniform size on a lighter background move from the bottom to top of a video. 
 
-The `free_climber` platform is designed to take a video of flies climbing in vials, and quantify the group's velocity. This gif demonstrates the principle underlying how velocity is quantified:
+This gif demonstrates the principle underlying how velocity is quantified:
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/tutorial_0.gif" width="500" height="167">
+<img src="https://github.com/adamspierer/FreeClimber/blob/dev/z/tutorial/0-Tutorial_climbing.gif" width="500" height="167">
 
-Blue '+' represent candidate spots, while colored circles represent 'true' spots that passed a cutoff threshold. Blue circles represent the portion of the video where the mean cohort position is rising most consistently (seen in both the video of flies climbing and in the position vs. time plot). A black dotted line signifies the line of best fit through this portion of the curve, while a grey jagged line represents the trajectory of points throughout the video. As flies reach the top of the vial, they become more challenging for the detector to find so the curve begins to plateau and becomes less linear. When this happens, the blue circles become red and the final climbing metric is no longer calculated.
+On the left, blue '+' represent candidate spots, while colored circles represent 'true' spots that passed a specified threshold. Circles are blue during the most linear portion of the position vs. time (velocity) curve, and red otherwise. On the right, the mean vertical position of all points by frame show a gray line connecting the mean vertical position for all true spots identified by frame. The line of best fit corresponds with the regression line through the most linear segment, and its slope corresponds with the climbing velocity of that cohort.
 
-This platform enables users to use an interactive, graphical user interface (GUI) to optimize detection parameters and specify experimental details, as well as an option for batch processing many videos using the command line. This tutorial will walk through both approaches.
+This platform implements a Graphical User Interface (GUI) so users can optimize detection parameters and specify experimental details, and a command line interface for batch processing many videos with the same detection parameters.
 
 <h2>Installation and requirements</h2>
 
-To install, make sure `conda` is [installed on your computer](https://docs.anaconda.com/anaconda/install/).
+We recommend running this package in an Anaconda-based virtual environment. Anaconda can be downloaded [here](https://docs.anaconda.com/anaconda/install/).
 
-Then, type: `conda install -c adamspierer free_climber` into the command line to install the package requirements.
+**Make sure** `conda` **is installed** (should return something like `conda 4.7.11`):
 
-Create a [virtual environment](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/) for Python3 using conda, since installing some modules directly to the base operating system can cause errors.
+	conda -V 
 
-Platform was written in Python 3.7.6 and requires the following modules:
+**Update conda if needed** (press `y` when prompted):
 
+	conda update conda
+
+**Create a Python 3 virtual environment** (replace `python36` with your name of choice):
+	
+	conda create -n python36 python=3.6 anaconda
+
+*NOTE: See note above about Python 3.6 vs. 3.7..*
+
+**Activate your virtual environment**:
+
+	conda activate python36
+	
+**OR** (if that doesn't work):
+
+	source activate python36
+
+For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). 
+
+Once the environment is set up and activated, we can install the following dependencies.
+
+    - argparse   [1.1   ]
+    - ffmpeg     [1.4   ]
     - matplotlib [3.1.3 ]
     - numpy      [1.18.1]
     - pandas     [1.0.0 ]
     - pip        [20.0.2]
-    - python     [3.7.6 ]
     - scipy      [1.4.1 ]
     - trackpy    [0.4.2 ]
     - wxPython   [4.0.4 ]
 
-Also requires:
-    - ffmpeg (only tested with v.4.0, but should run with others)
+NOTE: This platform was developed using Python 3.7.6, and also tested in a Python 3.6 environment. Earlier Python 3 versions will likely work as well but are untested.
 
-Alternatively, the Github repository can be cloned and dependencies manually installed.
+**Installation using `conda`**:
+
+	conda install -c adamspierer freeclimber
+
+**Installation using PyPi**: 
+
+	pip install FreeClimber
+
+**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder.
+
+**Cloning the git repository**:
+
+	cd <folder of interest>
+	git clone https://github.com/adamspierer/FreeClimber.git
+	
+NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
 
 <h2>Running the interactive, Graphical User Interface</h2>
 
 The graphical user interface (GUI) is useful for optimizing the parameters one might use in analyzing a video. Several fields are available to modify and buttons enable quick testing.
 
+Before getting started, it is important that the videos have spots with sufficient contrast against a light background, and that files are named with the experimental variables in the file name and separated by underscores 
+	
+	Example: <genotype>_<sex>_<replicate>.<suffix> ==> w1118_m_2.h264
+
 <h3>Step 1 - Specify a video</h3>
 
-Assuming this is the first walkthrough, we should run through the GUI to optimize the detection parameters. To begin, run `pythonw free_climber_gui.py`. A dialog box will appear and you should select a video to start with. If you picked the wrong file, you can always reselect using the `Browse...` button in the upper left.
+To begin, we will run the GUI to optimize the detection parameters: 
 
-When the video loads, the backend will scrape some of the metadata from the video and populate some of the fields. One of these fields is the `Frames / sec` field.
+	pythonw FreeClimber_gui.py
 
-**Frame rate** - The default value is 25, so if the frame rate is known but different, then manually override it or leave it and keep it consistent across videos.
+<img src="https://github.com/adamspierer/FreeClimber/blob/dev/z/1-Tutorial_opening.png" width="500" height="400">
+
+A dialog box will appear and you should select a video to start with. If you picked the wrong file, you can always reselect using the `Browse...` button in the upper left. For this tutorial, we will use the file `clean_background_few_flies.h264`, which can be viewed using [VLC media player](https://www.videolan.org/vlc/index.html).
+
+TIP: To bypass the dialog box, the video file path can be added as an argument after the command:
+
+	pythonw FreeClimber_gui.py clean_background_few_flies.h264
+
+When the video loads, the program will collect what metadata it can and populate those fields:
+
+**x-pos.** - Left-most point to crop the Region of Interest (ROI).
+
+**y-pos.** - Top-most point to crop the ROI.
+
+**Width** - The number of pixels in the `x` direction. Starting value is the width of the video, but this changes when selecting a region of interest
+
+**Height** - The number of pixels in the `y` direction. Starting value is the height of the video, but this changes when selecting a region of interest
+
+NOTE: Images are indexed from upper left to lower right, which is different from most plots which are oriented lower left to upper right. The loaded video will show the first frame, so no need to be alarmed when the y-axis reflects this aspect of image indexing.
+
+**Frame rate** - The number of `frames / second` has a value of 25. This value is useful if you want to convert the end slope to `cm / second` rather than `pixels / frame`.
 
 <h3>Step 2 - Defining video parameters</h3>
 
-Selecting-and-dragging the cursor across the video will create a red rectangle will appear. This rectangle can be redrawn several times, making it useful for measuring known distances to calibrate the final slopes into pixels per centimeter and for drawing a Region of Interest (ROI) around the vials.
+These variables are important for adding a scaling factor if you are interested in having `cm / seconds` vs `pixels / frame` (advantage being that results can be compared across studies) and decreasing the time required to analyze a single video.
 
-**Pixels per centimeter** - To calculate the number of pixels per centimeter, draw a horizontal or vertical line between two points of known distance (e.g. the width of a fly vial -- narrow glass = 2.45 cm across). Record the corresponding value in the `Width` or `Height` and resample if there are other markers in frame. Take the average of these measurements and divide by their known distance in cm. Enter this new value into the `Pixels / cm` field. 
+To start with, we can select-and-drag the cursor across the video to draw a rectangle. This rectangle can be redrawn several times, making it useful for:
+	
+1. <i><u>Measuring known distances to calibrate the final slopes into pixels per centimeter</i></u> 
 
-For example, if three vials were measured at 110, 114, 111 -- then the average would be 111.7, which is then divided by 2.45 to equal 45.6 pixels/cm. If you want the final slope values output from the platform to be in cm / second, then click the `Convert to cm?` box directly below the field you populated. Otherwise, resulting slope values will be in pixels / second.
+	To calculate the **Pixels per centimeter** parameter, draw a horizontal or vertical line between two points of known distance. In this example, we can a horizontal line to measure the width of a [narrow glass vial](https://geneseesci.com/shop-online/product-details/32-201/drosophila-vials-narrow-glass2?search=glass%20vials) (2.45 cm). Record the value in the `Width` or `Height` field for each of the vials, calculate the average, and divide that by the known distance in cm. 
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/2-Tutorial_measure_vials.png" width="500" height="400">        <img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/pixel_to_cm_calculation.png" width="223" height="200">
+	<img src="https://github.com/adamspierer/FreeClimber/tree/dev/z/tutorial/2-Tutorial_measure_vials.png" width="500" height="400">
 
-**Draw a Region of Interest (ROI)** - Move the cursor over to the upper left-most point, press and hold as you draw a rectangle over the Region Of Interest (ROI) you want to analyze. It is important that the **rectangle be drawn from the upper left to the lower right**--negative values for the height and/or width are not supported. Some may want to draw a larger rectangle if there is variation in the vial rack's position between videos, while others may want a rectangle that is tighter to the experimental rig if there is little positional variation between videos. The larger the box, the more pixels to process, the longer it will take to process a video. 
+	Here, we measured three vials at 110, 114, 111 pixels (average = 111.7 pixels/vial). When we divide that by the known width of a vial (2.45 cm), we are left with a conversion factor of 45.6 pixels/cm. 
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/3-Tutorial_draw_box.png" width="500" height="400">
+	<img src="https://github.com/adamspierer/FreeClimber/tree/dev/z/tutorial/pixel_to_cm_calculation.png" width="223" height="200">
 
-**Fixed ROI size?** - This box allows the user to specify a custom `width` and `height` for the rectangle, and then click anywhere on the image and have that box move around.
+	To automatically convert the final slopes to `cm / second`, click the `Convert to cm?` box. Alternatively, the resulting slopes will be in `pixels / frame`.
 
+2. <u><i>Drawing a Region of Interest (ROI) to improve detection time.</i></u>
+
+	Next, we can specify a ROI to improve the performance of the detector by only analyzing the parts of the video we care about. Draw a rectangle from upper-left to lower-right. Other directions or negative values in these positional fields will result in an error. 
+
+	<img src="https://github.com/adamspierer/FreeClimber/tree/dev/z/tutorial/3-Tutorial_draw_box.png" width="500" height="400">
+
+	A checkbox for **Fixed ROI size?** allows the user to define specific dimensions. Once the dimensions are specified and the box is checked, users can click on the image to move the box around.
 
 <h3>Step 3 - Specify spot parameters</h3>
 
-These parameters are important for identifying candidate spots, as well as setting a threshold for determining whether a spot is "True" or not.
+These parameters are for configuring the detector and filtering for candidate vs. true spots based on a `minmass` and signal `threshold`. If you are processing many videos, it is best practice to optimizing these parameters with a few representative videos.
 
 **Diameter** - Approximate diameter for estimating a spot. Only odd numbers, rounding up when in doubt.
 
 **MaxDiameter** - The maximum distance across to consider a spot.
 
-**MinMass** - The minimum integrated brightness.
+**MinMass** - The minimum integrated brightness. Spots will be filtered if their mass value does not pass this threshold.
 
-**Threshold** - The threshold value for calling a spot "True" or "False." True/False spots are visualized using the `Test Parameters` button, more below.
-For more information, see the [TrackPy documentation](http://soft-matter.github.io/trackpy/v0.4.2/generated/trackpy.locate.html#trackpy.locate). Start low for the first pass at optimizing the parameters--the `Test parameters` button will output a plot that helps better gauge an appropriate value later on.
+**Threshold** - The signal threshold value for filtering spots. Specify a threshold, or leave as "auto" for the program to calculate one. The "auto" threshold looks for the local minimum between two local maximum, or takes the halfway mark between the global maximum.
+
+For more information, see the [TrackPy documentation](http://soft-matter.github.io/trackpy/v0.4.2/generated/trackpy.locate.html#trackpy.locate).
 
 <h3>Step 4 - Additional parameters</h3>
 
-**Background Frames** - The first through last frames from which to calculate a background image. The default is to calculate it from the entire video, but a subset can be taken to insignificantly reduce processing time. The median pixel intensity across all coordinates is calculated (middle image), and when that is subtracted from an individual frame (left image), the program is left with just the pixels that change color (signifying movement; right image). Here is an example of what this looks like to the computer:
+These parameters are important for setting the `background frames` range for calculating the background image, `checking frames` during the optimization process, specifying the number of `vials` in a video, and the `window size` of the local linear regression. 
+
+**Background Frames** - The first through last frames from which to calculate a background image. The default is to use all frames, but a subset can be used to account for unexpected background movement or irregularities in the video. Here, the median pixel intensity for each x,y-coordinate is calculated. This median image (middle-left image) is subtracted from each individual frame (middle), resulting in videos with much greater signal:noise ratio (middle-right image; right image). This background-subtracted video can then be processed by the detector (left-most image).
 
 <img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/background_subtraction/4_compilation.png" width="600" height="200">
 
-**Check Frames** - Enter two separate frames to display the candidate and True points when running the `Test Parameters` button. The defaults are the first frame and the one calculated to be the frame at 2 seconds.
+**Check Frames** - Enter two separate frames to display the candidate and True points when running the `Test Parameters` button. The defaults are the first frame and the one calculated to be the frame at 2 seconds, though as of now only the first field is used.
 
-**Number of vials** - The number of vials to bin flies into within a video. Vials are evenly spaced bins across the minimum and maximum x-coordinates in a video. This is useful for following unique vials across time or treatments. That said, it is important to have flies in the edge vials since the minimum and maximum x-coordinates in a video determine how the spots are binned across vials. Alternatively, videos can be analyzed as a single vial by entering 1.
+**Number of vials** - The number of vials present in a video. Spots are assigned to lanes or vials based on their x-position. These divisions are evenly-spaced bins placed between the maximum and minimum x-values for all frames. Some issues can arise if there are true spots (crossing signal and mass threshold) that lie beyond the range that they should (ex. true spot as an artefact of the rig) or if in a batch of videos one vial has no flies that move (ex. longitudinal aging study). To circumvent these issues, you can make `Number of vials = 1`.
 
-**Window size** - Number of frames for sliding window when calculating the local linear regression. The best practice is to input the number of frames corresponding with the most linear portion of the sigmoidal, mean y-position vs. time plot and use a few frames short of the length of that linear portion. We found flies can climb the vial in 1 to 2 seconds. The longer the length, the better the estimate. But if the length is too long it may be a poor estimate. 
+**Window size** - Number of frames for a sliding window when calculating the local linear regression. The best practice is to input ~90% of the number of frames corresponding with the most linear portion of the asymptotic or sigmoidal mean y-position vs. time plot for one of the fastest climbers in your panel. In our work, we found flies can climb the vial in about seconds at 29 frames per second `29 * 2 * 0.9 = 52`, so we settled on 50 frames.
 
 <h3>Step 5 - Naming parameters</h3>
 
-**Naming pattern** - All input files should be named with experimental details separated by an underscore. For instance, if an experiment was testing genotype and sex performance across days, with several replicates, then the naming convention might be `genotype_sex_day_rep`. The order is somewhat important; experimental details consistent during the experiment (e.g. genotype and sex) should be in the beginning, while those that change (e.g. time and replicate) should be at the end. The order of variables within those groupings does not matter.
+These next variables are important for properly saving 
+
+**Naming pattern** - As noted above, all input files should be named with experimental details separated by an underscore. The program will scrap these details and fill them into columns named by the `Naming pattern` in the appropriate results files. For instance, if an experiment was testing several genotypes of both sexes in a longitudinal study across days with several technical replicates for each, then:
+
+	Naming pattern = genotype_sex_day_rep
+	
+The program will automatically load the file name, just be sure to replace these fields with the appropriate variable name. There is no need for a file suffix since this is pulled from the input file and the order is somewhat important. Experimental details that do not change over the course of the experiment (e.g. genotype and sex) should be in the beginning with the number of these fields entered in **Video vars**. Experimental details that change (e.g. time and replicate) should be at the end. Within each of these distinctions, the order does not matter.
 
 **Video vars** - The number of variables that are consistent during the experiment (e.g. 2 for genotype and sex). See entry above.
 
-**Project path** - The parent folder to search through for all video files of a given type. The `.cfg` file and `results.csv` file containing all slopes from all videos at the end will eventually be saved to this folder.
-
+**Project path** - The parent folder to search through for all video files of a given type (same video file type as the video file loaded). The generated configuration (`.cfg`) file and final `results.csv` file containing all slopes from all videos will eventually be saved to this folder.
 
 <h3>Buttons</h3>
 
-**Test parameters** - This button allows the user to optimizing the spot parameters and background frames. All "false" spots have a blue '+' over them, while "true" spots have a red circle over them. "True" vs "false" spots are labeled such if the 'signal' for that spot exceeds the user-defined `Threshold`. A histogram plot will assist in determining an appropriate `Threshold`. Just look for the region just before the large hump on the far right. After resulting plots are generated, one can reload the same video with the `Reload video`, or press any of the other buttons.
+When all the appropriate fields are set, we can process the video.
+
+**Test parameters** - This button begins a full analysis of the loaded video. Plots are generated in the GUI that correspond with the median background image, `Check frame` frame number, and the mean vertical-position vs. time plots (darker segments indicate most linear section) on the top row, and mass distribution of spots (line indicates `minmass` threshold), distribution of spot signals (line indicates signal threshold), and number of spots counted per frame. To modify fields and make adjustments, press the `Reload video` button. Alternatively, press `Save parameters` to generate the final `.cfg` file.
 
 <img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/4-Tutorial_test_parameters.png" width="500" height="400">
 
-**Reload video** - Reload a video to refine detection parameters once the `Test parameters` button has been pressed.
+**Reload video** - Reload a video to refine detection parameters once the `Test parameters` button has been pressed, or load a new video with the **Browse** button.
 
 **Save parameters** - Generate a `.cfg` file from the displayed parameters. This file can be edited manually to use the same analysis parameters on a different set of files.
-
-**Run analysis** - Perform full analysis on the selected video.
 
 <img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/5-Tutorial_analysis.png" width="500" height="400">
 

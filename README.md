@@ -5,7 +5,7 @@
 
 `FreeClimber` is a Python 3-based, background-subtracting particle detection algorithm that performs a local linear regression to quantify the vertical velocity of points moving in a common direction. 
 
-<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/tutorial_0.gif" width="600" height="200" align="center">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/tutorial/0-Tutorial_climbing.gif" width="600" height="200" align="center">
 
 In lay terms:
 
