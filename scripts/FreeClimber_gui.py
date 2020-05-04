@@ -4,8 +4,6 @@
 ## Version number
 version = '0.3'
 
-## Known wxPython DeprecationWarning at the beginning for NewID()
-
 
 ## More universal modules
 import wx
@@ -32,27 +30,30 @@ from detector import detector
 
 ## Set up wxPython application window
 class App(wx.App):
+    '''Create the main window and insert the custom frame'''
     def OnInit(self):
-        '''Create the main window and insert the custom frame'''
         frame = create(None, file_name)
         self.SetTopWindow(frame)
         frame.Show(True)
         return True
 
 ## Main GUI frame
-class DectFrame(wx.Frame):    
+class main_gui(wx.Frame):    
+    '''Setting up the placement and '''
     def __init__(self, parent, file_path):
-        if args.debug: print('-------->  __init__')
+        if args.debug: print('main_gui.__init__')
         self.args = args
         self.initialize_controls(parent)
         self.box_sizer.Add(self.panel1, 0, wx.EXPAND)
 
-        self.pressed=False
         ## Initialize GUI plot
         self.figure = Figure()
         self.canvas = FigureCanvas(self, -1, self.figure)
         self.box_sizer.Add(self.canvas, 1, wx.EXPAND)
 
+        ## Default rectangle variable
+        self.pressed=False
+        
         ## Initialize bottom text bar
         self.box_sizer.Add(self.status_bar, 0, border=0, flag=0)
         self.status_bar.SetStatusText('Ready', 0)
@@ -60,20 +61,22 @@ class DectFrame(wx.Frame):
     
         ## Set up names
         self.video_file = file_path
-        
-        ## Check input file is valid
-        if not os.path.isfile(file_path):
+        print(self.args.video_file)
+
+        ## Create a dialog box at the beginning if the video path is not a real file
+        if self.args.video_file == None:
             openFileDialog = wx.FileDialog(self, "Open Video file", "", "",
                                        "Video files (*.*)|*.*", 
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
 
+            ## Closing program if Browse box is closed
             if openFileDialog.ShowModal() == wx.ID_CANCEL:
-                print('\n\nExiting Program. Must select a video from box or enter path into command line\n\n')
+                print('\nExiting Program. Must select a video from box or enter path into command line\n')
                 raise SystemExit
 
+            ## Setting video name from dialog box selection
             self.video_file = openFileDialog.GetPath()        
-            file_path = self.video_file
-        
+
         ## Passing individual inputs from GUI to a list
         self.update_names()
         self.input_names = ['x','y','w','h','frame_0','blank_0','blank_n',
@@ -93,27 +96,36 @@ class DectFrame(wx.Frame):
         for button in button_list:
             exec('self.button_' + button + '.Enable(True)')
 
+        ## Load video
         self.load_video()
         self.status_bar.SetStatusText("Ready...",0)
         if args.debug: print('End of init')
         return
 
     def update_variables(self):
-        if args.debug: print('---------> update_variables')
+        '''Updates the detection variables'''
+        if args.debug: print('main_gui.update_variables')
         variables = []
         
+        ## Including integers
         for item,jtem in zip(self.input_names[:16],self.input_values[:17]):
             phrase = str(item + '='+ jtem.GetValue())
             if args.debug: print('    '+phrase)
             variables.append(phrase)
+
+        ## Including strings - type I
         for item,jtem in zip(self.input_names[16:18],self.input_values[16:18]):
             phrase = str(item + '="'+ jtem.GetValue()+'"')
             if args.debug: print('    '+phrase)
             variables.append(phrase)
+
+        ## Including strings - type II
         for item,jtem in zip(self.input_names[18:19],self.input_values[18:19]):
             phrase = str(item + '="'+ str(jtem)+'"')
             if args.debug: print(phrase)
             variables.append(phrase)
+        
+        ## Including booleans
         for item,jtem in zip(self.input_names[19:],self.input_values[19:]):
             phrase = str(item + '=%s' % str(jtem.GetValue()))
             if args.debug: print('    '+phrase)
@@ -122,8 +134,10 @@ class DectFrame(wx.Frame):
         return variables
 
     def load_video(self):
-        if args.debug: print('--------> load_video')
-        #Load the video, set Cursor to be busy
+        '''Function for loading the video when the respective button is pressed'''
+        if args.debug: print('main_gui.load_video')
+        
+        ## Set up
         self.status_bar.SetStatusText("Loading video",0)
         self.figure.clear()
         self.axes   = [self.figure.add_subplot(111), ]
@@ -132,25 +146,27 @@ class DectFrame(wx.Frame):
         status = self.check_specified_video()
         if status:
             print("Loading:", self.video_file)
-#             self.input_frame_rate.SetValue('25')
             self.update_names()
             for item in self.input_values[:4]:
                 item.SetEditable(True)
                 item.Enable(True)
             self.checkBox_fixed_ROI.Enable(True)
             self.input_convert_to_cm_sec.Enable(True)
+
+            ## Busy cursor while the detector object is called and initialized
             wx.BeginBusyCursor()
             try:
-                variables = self.update_variables()
+                vars = self.update_variables()
                 self.detector = detector(self.video_file,
                                         gui=True,
-                                        variables = variables)
+                                        variables = vars)
             
                 self.axes[0].imshow(self.detector.image_stack[0])
                 self.figure.canvas.draw()
             finally:
                 wx.EndBusyCursor()
-
+            
+            ## Setting mechanism for drawing the ROI rectangle
             self.canvas.Bind(wx.EVT_ENTER_WINDOW, self.ChangeCursor)
             self.canvas.mpl_connect('button_press_event', self.draw_rectangle)
             self.canvas.mpl_connect('button_release_event', self.on_release)
@@ -158,8 +174,7 @@ class DectFrame(wx.Frame):
             self.rect = Rectangle((0,0), 1, 1, fill=False, ec='r')
             self.axes[0].add_patch(self.rect)
 
-
-            ## Auto-set GUI parameters form video
+            ## Auto-set GUI parameters from the video
             self.input_blank_0.SetValue('0')
             self.input_blank_n.SetValue(str(self.detector.n_frames))
             self.input_frame_0.SetValue('0')
@@ -174,8 +189,6 @@ class DectFrame(wx.Frame):
                 pass
             if self.detector.n_frames < self.input_frame_rate*2:            
                 self.input_frame_0.SetValue(str(self.detector.n_frames))
-#             else:
-#                 self.input_frame_n.SetValue(str(self.input_frame_rate*2))
             
             ## Try to make the local linear regression window size 2 seconds, but if not then 35% of the frames in the video
             if self.detector.n_frames < self.input_frame_rate*2:
@@ -190,53 +203,55 @@ class DectFrame(wx.Frame):
             self.x1 = self.detector.width
             self.y1 = self.detector.height
         
+            ## Display the first frame of the video in the GUI
             self.update_ROIdisp()
             self.canvas.draw()
         else:
             return
 
     def update_names(self):
-        if args.debug: print('--------> update_names')
+        '''Updates the names of variables within the program. Generally variables set for naming files.'''
+        if args.debug: print('main_gui.update_names')
         self.status_bar.SetStatusText("Updating file names...",0)
         self.text_video_path.SetLabelText(self.video_file)
         self.folder, self.name        = os.path.split(self.video_file)
-#         print(self.name)
         self.name,   self.input_file_suffix = self.name.split('.')
 
+        ## Naming files to be generated
         self.name_noext  = os.path.join(self.folder,self.name)
         self.path_data   = self.name_noext + '.raw.csv'
         self.path_filter = self.name_noext + '.filter.csv'
         self.path_plot   = self.name_noext + '.diag.png'
         self.path_slope  = self.name_noext + '.slopes.csv'
+        if args.debug: print('name:',self.name_noext,"+ file suffixes")
+                
+        ## Set path_project default to the folder of the selected video file
+        if self.input_path_project == '': self.input_path_project = self.folder
+        return
         
-        if self.input_path_project == '':
-            self.input_path_project = self.folder
-
-
     def check_specified_video(self):
-        if args.debug: print('--------> check_specified_video')
+        if args.debug: print('main_gui.check_specified_video')
         self.status_bar.SetStatusText("Checking specified video...",0)
+    
+        ## Check file path and update names
         if os.path.isfile(self.video_file):
             self.button_reload_video.Enable(True)
             self.button_test_parameters.Enable(True)
             self.update_names()
             self.input_file_suffix = '.' + self.video_file.split('/')[-1].split('.')[-1]
             return True
-
-        elif file_path == None:
-            self.button_browse_video.Enable(True)
-            return False
-
+        
         else:
-            self.video_file = "Invalid file. Please change the file path"
+            self.video_file = "No or invalid file entered. Please change the file path"
             self.button_browse_video.Enable(True)
             return False
 
 
+    ## Commands for drawing the ROI rectangle
     def ChangeCursor(self, event):
         '''Change cursor into crosshair type when enter the plot area'''
         self.canvas.SetCursor(wx.Cursor(wx.CURSOR_CROSS))
-
+        return
 
     def draw_rectangle(self, event):
         '''Draw ROI rectangle'''
@@ -246,6 +261,8 @@ class DectFrame(wx.Frame):
             try:
                 self.x0 = int(event.xdata)
                 self.y0 = int(event.ydata)
+                
+                ## If the fixed_ROI box is checked, handle values differently
                 if self.checkBox_fixed_ROI.GetValue():
                     self.x1 = self.x0 + int(eval(self.input_w.GetValue()))
                     self.y1 = self.y0 + int(eval(self.input_h.GetValue()))
@@ -253,13 +270,15 @@ class DectFrame(wx.Frame):
                     self.rect.set_height(self.y1 - self.y0)
                     self.rect.set_xy((self.x0, self.y0))
                     self.canvas.draw()
+                
+                ## Set the values in the GUI and program to drawn rectangle
                 self.input_x.SetValue(str(self.x0))
                 self.input_y.SetValue(str(self.y0))
                 self.input_h.SetValue(str(self.rect.get_height()))
                 self.input_w.SetValue(str(self.rect.get_width()))
             except:
                 pass
-
+        return
 
     def on_release(self, event):
         '''When mouse is on plot and button is released, redraw ROI rectangle, update ROI values'''
@@ -271,15 +290,15 @@ class DectFrame(wx.Frame):
             else:
                 self.redraw_rect(event)
             self.update_ROIdisp()
-
+        return
 
     def on_motion(self, event):
         '''If the mouse is on plot and if the mouse button is pressed, redraw ROI rectangle'''
         if self.pressed & self.checkBox_fixed_ROI.Enabled & (not self.checkBox_fixed_ROI.GetValue()):
-            # redraw the rect
+            # Redraw the rectangle
             self.redraw_rect(event)
             self.update_ROIdisp()
-
+        return
 
     def redraw_rect(self, event):
         '''Draw the ROI rectangle overlay'''
@@ -298,20 +317,19 @@ class DectFrame(wx.Frame):
                 pass
         except:
             pass
-
+        return
 
     def update_ROIdisp(self):
-        '''Update ROI display in UI'''
+        '''Updates the ROI coordinates as the rectangle is drawn.'''
         self.input_x.SetValue(str(self.x0))
         self.input_y.SetValue(str(self.y0))
         self.input_h.SetValue(str(int(self.y1) - int(self.y0)))
         self.input_w.SetValue(str(int(self.x1) - int(self.x0)))
-       
+        return
 
     def OnButton_testParButton(self, event):
-        '''plot the decection result and compare two frames, an early and a late Frame
-        So the parameter can be fine tuned.'''
-        if args.debug: print('-------->  OnButton_testParButton')
+        '''Tests the entered parameters when the `Test parameters` button is pressed'''
+        if args.debug: print('main_gui.OnButton_testParButton')
         self.status_bar.SetStatusText("Testing parameters...",0)
 
         #Prep the parameters
@@ -327,32 +345,32 @@ class DectFrame(wx.Frame):
                      self.figure.add_subplot(235),
                      self.figure.add_subplot(236)]
 
+        ## Busy cursor while the main function runs
         wx.BeginBusyCursor()
         try:
             self.detector.parameter_testing(variables, self.axes)
         finally:
             wx.EndBusyCursor()
-        
+
+        ## Renders plots in the GUI
         self.figure.tight_layout()
         self.figure.canvas.draw()
         
-        # Once the ROI is defined, disable further changes
+        # Enable buttons and print statements once parameter testing is complete
         self.button_reload_video.Enable(True)
         self.button_store_parameters.Enable(True)
-#         self.button_test_parameters.Enable(False)
-        
         if args.debug: print('Parameter testing complete')
         self.status_bar.SetStatusText("Refine detector parameters by reloading the video, or finish optimization by pressing 'Save configuration'",0)
-
+        return
 
     def OnButton_strParButton(self, event):
         '''Runs the 'save_parameter' function for creating the configuration file'''
-        if args.debug: print('-------->  OnButton_strParButton')
+        if args.debug: print('main_gui.OnButton_strParButton')
         self.save_parameter()
 
     def set_config_file(self):
         '''Set path for the project folder'''
-        if args.debug: print('-------->  OnButton_strParButton')
+        if args.debug: print('main_gui.OnButton_strParButton')
         ## Figure out where to save configuration file
         if os.path.isdir(self.input_path_project):
             if not self.input_path_project.endswith('/'):
@@ -363,7 +381,7 @@ class DectFrame(wx.Frame):
         return self.path_parameters
 
     def save_parameter(self):
-        if args.debug: print('-------->  save_parameter')
+        if args.debug: print('main_gui.save_parameter')
         '''
         Save parameters as python list.
         New parameter sets appended to the config file.
@@ -382,9 +400,10 @@ class DectFrame(wx.Frame):
             print('## FreeClimber ##', file=f)
         f.close()
         
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(self.path_parameters,'a') as f:
             print('## Generated from file:'+self.video_file,file = f)
-            print('##     @ ' + str(time.ctime()), file = f)
+            print('##     @ ' + now, file = f)
             print('##',file = f)
             print('## Analysis parameters:',file = f)
             for item in variables:
@@ -394,7 +413,7 @@ class DectFrame(wx.Frame):
         return
 
     def OnButton_Browse(self, event):
-        if args.debug: print('-------->  OnButton_Browse')
+        if args.debug: print('main_gui.OnButton_Browse')
         openFileDialog = wx.FileDialog(self, "Open Video file", "", "",
                                        "Video files (*.*)|*.*", 
                                        wx.FD_OPEN | wx.FD_FILE_MUST_EXIST)
@@ -409,18 +428,22 @@ class DectFrame(wx.Frame):
 
 
     def OnButton_LoadVideo(self,event):
-        if args.debug: print('-------->  OnButton_LoadVideo')
+        '''Calls function to load the video when the `reload` button is pressed'''
+        if args.debug: print('main_gui.OnButton_LoadVideo')
         self.load_video()
         return
         
     def initialize_sizers(self):
-        if args.debug: print('-------->  initialize_sizers')
+        '''Initializes the GUI window orientation'''
+        if args.debug: print('main_gui.initialize_sizers')
         # Generated method, do not edit
         self.box_sizer = wx.BoxSizer(orient=wx.VERTICAL)
         self.SetSizer(self.box_sizer)
+        return
 
     def initialize_controls(self, prnt):
-        if args.debug: print('-------->  initialize_controls')
+        '''Initializes the GUI controls, for which there are many'''
+        if args.debug: print('main_gui.initialize_controls')
         # Generated method, do not edit
         wx.Frame.__init__(self, id=wxID_text_title, name='', parent=prnt,
               pos=wx.Point(100, 30), size=wx.Size(950, 759),
@@ -571,9 +594,9 @@ class DectFrame(wx.Frame):
               label=u'Check Frames:', name='text_check_frames', parent=self.panel1,
               pos=wx.Point(col4, 55), size=wx.Size(115, 17), style=0)
 
-        self.input_frame_0 = wx.TextCtrl(id=input_frame_0,
+        self.input_frame_0 = wx.TextCtrl(id=wxID_input_frame_0,
               name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 55),
-               size=wx.Size(small_box_dimensions), style=0, value=u'')
+               size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Background frames
         self.text_background_frames = wx.StaticText(id=wxID_text_background_frames,
@@ -582,11 +605,11 @@ class DectFrame(wx.Frame):
               style=0)
         self.input_blank_0 = wx.TextCtrl(id=wxID_input_blank_0,
               name=u'input_blank_0', parent=self.panel1, pos=wx.Point(col4+ 130, 30),
-            size=wx.Size(small_box_dimensions), style=0, value=u'')
+            size=wx.Size(small_box_dimensions), style=0, value=u'0')
 
         self.input_blank_n = wx.TextCtrl(id=wxID_input_blank_n,
               name=u'input_blank_n', parent=self.panel1, pos=wx.Point(col4 + 170,30),
-              size=wx.Size(small_box_dimensions), style=0, value=u'')
+              size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Vials
         self.text_vials = wx.StaticText(id=wxID_text_vials,
@@ -669,16 +692,48 @@ class DectFrame(wx.Frame):
         self.status_bar = wx.StatusBar(id=wxID_status_bar,
               name='status_bar', parent=self, style=0)
         self.initialize_sizers()
-              
+        return   
 
+## Create the GUI
 def create(parent, file_path):
-    if args.debug: print('-------->  create')
+    '''Begins running the main GUI object
+    ----
+    Inputs:
+      file_path (str): path to the video file
+    ----
+    Returns:
+      main_gui (object): begins running the main_gui object
+    '''
+    if args.debug: print('main_gui.create')
     if file_path==None:
         file_path='Select a video to begin'
-    return DectFrame(parent, file_path)
+    return main_gui(parent, file_path)
+
+## Print startup message and setup argument parser
+def startup():
+    '''Function prints top line and runs argument parsing function.
+    ----
+    Inputs:
+      None
+    ----
+    Returns:
+      args (list): list of arguments passed to program
+    '''
+    line_length = 72
+    line1 = '## FreeClimber v.%s ' % str(version)
+    line2 = "## Beginning program @ %s " % str(now)
+
+    print('\n')
+    print('#' * line_length)
+    print(line1 + '#'*(line_length-len(line1)))
+    print(line2 + '#'*(line_length-len(line2)))
+    print('#' * line_length)
+
+    args = define_argument_parser()
+    return args
 
 def define_argument_parser():
-    '''Gathers file name and checks to make sure it is a real file.
+    '''Parses out arguments (which are admittedly few for the GUI. Use the help flag '-h' for more information when running the program.
     ----
     Inputs:
       None
@@ -712,56 +767,26 @@ def define_argument_parser():
     args = parser.parse_args()
     return args
 
-## Print startup message and setup argument parser
-def startup():
-    '''Function prints top line and runs argument parsing function.
-    ----
-    Inputs:
-      None
-    ----
-    Returns:
-      args (list): list of arguments passed to program
-    '''
-    line_length = 72
-    line1 = '## FreeClimber v.%s ' % str(version)
-    line2 = "## Beginning program @ %s " % str(now)
-
-    print('\n')
-    print('#' * line_length)
-    print(line1 + '#'*(line_length-len(line1)))
-    print(line2 + '#'*(line_length-len(line2)))
-    print('#' * line_length)
-
-    args = define_argument_parser()
-    return args
-
-## Check input arguments
+## Check video argument arguments
 def check_args(args):
-    '''Checks arguments passed to parser and kills program if invalid path.
+    '''Confirms video path is valid, and if not hecks arguments passed to parser and kills program if invalid path.
     ----
     Inputs:
       args (list): Arguments passed to parsed
     ----
     Returns:
-      file (str): File path if it is entered and valid, or None if not.
+      args.video_file (str): Video file path if valid, or None if not.
     '''
-    if args.debug: print('-------->  check_args')
-
-    ## Confirm file path is valid
+    if args.debug: print('main_gui.check_args')
     if os.path.isfile(args.video_file):
         print('--> Video file: ',args.video_file)
-    elif args.video_file != None and ~os.path.isfile(args.video_file):
-        print('--> Exiting program: Invalid file path. Make sure video file for GUI is properly specified.')
-        print('!Not valid!', args.video_file)
-        print('')
-        raise SystemExit
     else:
-        print('--> No video file specified, select from Browser')
+        print('--> No video file specified, select from Browser...')
         args.video_file = None
     return args.video_file
 
 
-## Setting inputs
+## Initializing wx text boxes and input fields
 [wxID_text_step_1a,wxID_text_step_1b,wxID_text_step_2,wxID_text_step_3,wxID_text_step_4,wxID_text_step_5,
 wxID_panel_1, wxID_text_title, 
 wxID_browse_video, wxID_reload_video, wxID_store_parameters,
@@ -777,7 +802,7 @@ wxID_text_x, wxID_input_x,
 wxID_text_y, wxID_input_y,
 wxID_text_h, wxID_input_h,
 wxID_text_w, wxID_input_w,
-wxID_text_check_frames, input_frame_0, 
+wxID_text_check_frames, wxID_input_frame_0, 
 wxID_text_background_frames,wxID_input_blank_0, wxID_input_blank_n,
 wxID_text_vials, wxID_input_vials,
 wxID_text_window, wxID_input_window,
@@ -785,8 +810,8 @@ wxID_text_pixel_to_cm,wxID_input_pixel_to_cm,
 wxID_text_naming_convention,wxID_input_naming_convention,
 wxID_text_vial_id_vars,wxID_input_vial_id_vars,
 wxID_text_path_project,wxID_input_path_project,
-wxID_input_convert_to_cm_sec,wxID_check_box_ROI,
-wxID_vert_line_1] = [wx.NewId() for initialize_controls in range(52)] # wxID_run_analysis,wxID_input_frame_n,
+wxID_input_convert_to_cm_sec,wxID_check_box_ROI] = [wx.ID_ANY for item in range(51)] 
+
 
 ## Basic GUI sizes and spacers
 col1,col2,col3,col4,col5 = 10,180,320,525,750
