@@ -593,18 +593,10 @@ class main_gui(wx.Frame):
               label=u'Step 4: Additional parameters', name='text_step_4', parent=self.panel1, 
               pos=wx.Point(col4,10),
               size=wx.Size(100,22),style = wx.ALIGN_LEFT)
-
-        self.text_check_frames = wx.StaticText(id=wxID_text_check_frames,
-              label=u'Check Frames:', name='text_check_frames', parent=self.panel1,
-              pos=wx.Point(col4, 55), size=wx.Size(115, 17), style=0)
-
-        self.input_frame_0 = wx.TextCtrl(id=wxID_input_frame_0,
-              name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 55),
-               size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Background frames
         self.text_background_frames = wx.StaticText(id=wxID_text_background_frames,
-              label=u'Background Frames:', name='text_background_frames',
+              label=u'Background frames:', name='text_background_frames',
               parent=self.panel1, pos=wx.Point(col4, 30), size=wx.Size(medium_box_dimensions),
               style=0)
         self.input_blank_0 = wx.TextCtrl(id=wxID_input_blank_0,
@@ -614,6 +606,15 @@ class main_gui(wx.Frame):
         self.input_blank_n = wx.TextCtrl(id=wxID_input_blank_n,
               name=u'input_blank_n', parent=self.panel1, pos=wx.Point(col4 + 170,30),
               size=wx.Size(small_box_dimensions), style=0, value=u'0')
+
+        ## Check frames
+        self.text_check_frames = wx.StaticText(id=wxID_text_check_frames,
+              label=u'Check frames:', name='text_check_frames', parent=self.panel1,
+              pos=wx.Point(col4, 55), size=wx.Size(115, 17), style=0)
+
+        self.input_frame_0 = wx.TextCtrl(id=wxID_input_frame_0,
+              name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 55),
+               size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Vials
         self.text_vials = wx.StaticText(id=wxID_text_vials,
@@ -782,10 +783,13 @@ def check_args(args):
       args.video_file (str): Video file path if valid, or None if not.
     '''
     if args.debug: print('main_gui.check_args')
-    if os.path.isfile(args.video_file):
-        print('--> Video file: ',args.video_file)
-    else:
-        print('--> No video file specified, select from Browser...')
+    try:
+        if os.path.isfile(args.video_file):
+            print('--> Video file: ',args.video_file)
+        else:
+            print('--> No video file specified, select from Browser...')
+            args.video_file = None
+    except:
         args.video_file = None
     return args.video_file
 
