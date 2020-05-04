@@ -85,7 +85,7 @@ To begin, we will run the GUI to optimize the detection parameters:
 
 	pythonw FreeClimber_gui.py
 
-<img src="https://github.com/adamspierer/FreeClimber/raw/master/z/1-Tutorial_opening.png" width="500" height="400">
+<img src="https://github.com/adamspierer/FreeClimber/raw/master/z/1-opening.png" width="500" height="400">
 
 A dialog box will appear and you should select a video to start with. If you picked the wrong file, you can always reselect using the `Browse...` button in the upper left. For this tutorial, we will use the file `clean_background_few_flies.h264`, which can be viewed using [VLC media player](https://www.videolan.org/vlc/index.html).
 
