@@ -6,7 +6,7 @@
 
 This gif demonstrates the principle underlying how velocity is quantified:
 
-<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/0-Tutorial_climbing.gif" width="500" height="167">
+<img src="https://github.com/adamspierer/FreeClimber/raw/master/z/tutorial_0.gif" width="500" height="167">
 
 On the left, blue '+' represent candidate spots, while colored circles represent 'true' spots that passed a specified threshold. Circles are blue during the most linear portion of the position vs. time (velocity) curve, and red otherwise. On the right, the mean vertical position of all points by frame show a gray line connecting the mean vertical position for all true spots identified by frame. The line of best fit corresponds with the regression line through the most linear segment, and its slope corresponds with the climbing velocity of that cohort.
 
@@ -85,7 +85,7 @@ To begin, we will run the GUI to optimize the detection parameters:
 
 	pythonw FreeClimber_gui.py
 
-<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/1-Tutorial_opening.png" width="500" height="400">
+<img src="https://github.com/adamspierer/FreeClimber/raw/master/z/1-Tutorial_opening.png" width="500" height="400">
 
 A dialog box will appear and you should select a video to start with. If you picked the wrong file, you can always reselect using the `Browse...` button in the upper left. For this tutorial, we will use the file `clean_background_few_flies.h264`, which can be viewed using [VLC media player](https://www.videolan.org/vlc/index.html).
 
@@ -153,7 +153,7 @@ These parameters are important for setting the `background frames` range for cal
 
 **Background Frames** - The first through last frames from which to calculate a background image. The default is to use all frames, but a subset can be used to account for unexpected background movement or irregularities in the video. Here, the median pixel intensity for each x,y-coordinate is calculated. This median image (middle-left image) is subtracted from each individual frame (middle), resulting in videos with much greater signal:noise ratio (middle-right image; right image). This background-subtracted video can then be processed by the detector (left-most image).
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/background_subtraction/4_compilation.png" width="600" height="200">
+<img src="https://github.com/adamspierer/free_climber/raw/python3/supplemental/background_subtraction/4_compilation.png" width="600" height="200">
 
 **Check Frames** - Enter two separate frames to display the candidate and True points when running the `Test Parameters` button. The defaults are the first frame and the one calculated to be the frame at 2 seconds, though as of now only the first field is used.
 
@@ -181,13 +181,13 @@ When all the appropriate fields are set, we can process the video.
 
 **Test parameters** - This button begins a full analysis of the loaded video. Plots are generated in the GUI that correspond with the median background image, `Check frame` frame number, and the mean vertical-position vs. time plots (darker segments indicate most linear section) on the top row, and mass distribution of spots (line indicates `minmass` threshold), distribution of spot signals (line indicates signal threshold), and number of spots counted per frame. To modify fields and make adjustments, press the `Reload video` button. Alternatively, press `Save parameters` to generate the final `.cfg` file.
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/4-Tutorial_test_parameters.png" width="500" height="400">
+<img src="https://github.com/adamspierer/free_climber/raw/python3/supplemental/4-Tutorial_test_parameters.png" width="500" height="400">
 
 **Reload video** - Reload a video to refine detection parameters once the `Test parameters` button has been pressed, or load a new video with the **Browse** button.
 
 **Save parameters** - Generate a `.cfg` file from the displayed parameters. This file can be edited manually to use the same analysis parameters on a different set of files.
 
-<img src="https://github.com/adamspierer/free_climber/blob/python3/supplemental/5-Tutorial_analysis.png" width="500" height="400">
+<img src="https://github.com/adamspierer/free_climber/raw/python3/supplemental/5-Tutorial_analysis.png" width="500" height="400">
 
 <h2>Running the command line version</h2>
 
