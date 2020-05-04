@@ -6,7 +6,7 @@
 
 This gif demonstrates the principle underlying how velocity is quantified:
 
-<img src="https://github.com/adamspierer/FreeClimber/blob/dev/z/tutorial/0-Tutorial_climbing.gif" width="500" height="167">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/0-Tutorial_climbing.gif" width="500" height="167">
 
 On the left, blue '+' represent candidate spots, while colored circles represent 'true' spots that passed a specified threshold. Circles are blue during the most linear portion of the position vs. time (velocity) curve, and red otherwise. On the right, the mean vertical position of all points by frame show a gray line connecting the mean vertical position for all true spots identified by frame. The line of best fit corresponds with the regression line through the most linear segment, and its slope corresponds with the climbing velocity of that cohort.
 
@@ -85,7 +85,7 @@ To begin, we will run the GUI to optimize the detection parameters:
 
 	pythonw FreeClimber_gui.py
 
-<img src="https://github.com/adamspierer/FreeClimber/blob/dev/z/1-Tutorial_opening.png" width="500" height="400">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/1-Tutorial_opening.png" width="500" height="400">
 
 A dialog box will appear and you should select a video to start with. If you picked the wrong file, you can always reselect using the `Browse...` button in the upper left. For this tutorial, we will use the file `clean_background_few_flies.h264`, which can be viewed using [VLC media player](https://www.videolan.org/vlc/index.html).
 
