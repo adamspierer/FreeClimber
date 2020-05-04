@@ -129,7 +129,7 @@ def export(save_files = False, print_files = False, file_list=None, undone=False
         print('\n')
     if save_files:
         
-        save_path = destination + '/custom.prc'
+        save_path = destination + 'custom.prc'
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         
         print('Saving files to:', save_path)
