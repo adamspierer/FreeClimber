@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+## File name : FreeClimber_main.py
+## Created by: Adam N. Spierer
+## Date      : May 2020
+## Purpose   : Graphical User Interface wrapper for FreeClimber
+
 ## Version number
 version = '0.3'
-
 
 ## More universal modules
 import wx

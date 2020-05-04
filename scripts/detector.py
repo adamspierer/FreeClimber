@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+## File name : detector.py
+## Created by: Adam N. Spierer
+## Date      : May 2020
+## Purpose   : Script contains main functions used in FreeClimber package
+
+version = '0.3'
+
 import os
 import sys
 import time

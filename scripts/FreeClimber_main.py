@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*- 
 
+## File name : FreeClimber_main.py
+## Created by: Adam N. Spierer
+## Date      : May 2020
+## Purpose   : Command line interface wrapper for FreeClimber
+## 
 ## Upcoming features:
-## [ ] Test statements to confirm variables are entered properly
 ## [ ] Log files for all outputs
 ## [ ] Log files for videos skipped
 
 ## Version number
 version='0.3'
-doi =  'FILL ME IN' ## Link to published paper or dissertation
+doi =  '<link to dissertation>' ## Link to published paper or dissertation
 
 ## Importing external package(s)
 import os
