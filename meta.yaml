@@ -1,5 +1,5 @@
 {% set name = "FreeClimber" %}
-{% set version = "0.3" %}
+{% set version = "0.3.1" %}
 
 package:
   name: "{{ name|lower }}"
@@ -41,12 +41,12 @@ test:
     
 about:
   home: "https://github.com/adamspierer/FreeClimber.git"
-  license: "UNKNOWN"
+  license: "MIT"
   license_family: "OTHER"
-  license_file: ""
+  license_file: "LICENSE.txt"
   summary: "Background subtracting particle detector that quantifies vertical velocity of particles using a local linear regression"
-  doc_url: ""
-  dev_url: ""
+  doc_url: "https://github.com/adamspierer/FreeClimber/blob/master/TUTORIAL.md"
+  dev_url: "https://github.com/adamspierer/"
 
 extra:
   recipe-maintainers:
