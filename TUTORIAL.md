@@ -16,7 +16,7 @@ This platform implements a Graphical User Interface (GUI) so users can optimize 
 
 We recommend running this package in an Anaconda-based virtual environment. Anaconda can be downloaded [here](https://docs.anaconda.com/anaconda/install/).
 
-**Make sure** `conda` **is installed** (should return something like `conda 4.7.11`):
+**Make sure `conda` is installed** (should return something like `conda 4.7.11`):
 
 	conda -V 
 
@@ -38,7 +38,7 @@ We recommend running this package in an Anaconda-based virtual environment. Anac
 
 	source activate python36
 
-For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). 
+For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
 
 Once the environment is set up and activated, we can install the following dependencies.
 
@@ -52,17 +52,21 @@ Once the environment is set up and activated, we can install the following depen
     - trackpy    [0.4.2 ]
     - wxPython   [4.0.4 ]
 
-NOTE: This platform was developed using Python 3.7.6, and also tested in a Python 3.6 environment. Earlier Python 3 versions will likely work as well but are untested.
+NOTE: This platform was developed using Python 3.7.6, and tested in a Python 3.6 environment. We recommend running in a Python 3.6 environment for best results, earlier Python versions are untested.
 
-**Installation using `conda`**:
+**Installation using PyPi (Recommended)**: 
+
+	pip install FreeClimber
+    pip install ffmpeg-python
+
+NOTE: We recommend downloading these two modules separately.
+
+**Installation using `conda` (still in beta-testing)**:
 
 	conda install -c adamspierer freeclimber
 
-**Installation using PyPi**: 
 
-	pip install FreeClimber
-
-**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files from the GitHub repository and placed into a single folder.
+**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files from the GitHub repository and placed into a single folder)
 
 **Cloning the git repository**:
 
