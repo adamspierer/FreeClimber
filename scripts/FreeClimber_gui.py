@@ -65,7 +65,6 @@ class main_gui(wx.Frame):
     
         ## Set up names
         self.video_file = file_path
-        print(self.args.video_file)
 
         ## Create a dialog box at the beginning if the video path is not a real file
         if self.args.video_file == None:

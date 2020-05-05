@@ -172,7 +172,7 @@ class detector(object):
         for item,jtem in zip(file_names,file_suffixes):
             var_name = 'self.path_'+item
             file_path = ''.join([self.name_nosuffix,jtem])
-            print(var_name+"='"+file_path+"'")
+            if self.debug: print('detector.specify_paths_details: ' + var_name+"='"+file_path+"'")
             exec(var_name+"='"+file_path+"'")
 
         ## Project folder specific paths

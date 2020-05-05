@@ -352,17 +352,16 @@ def startup():
         print(string)
         return
 
-    line0 = '\n'
+    ## Lines to print
+    line0 = '#'*line_length
     line1 = '## FreeClimber v.%s ' % str(version)
     line2 = '## Please cite: %s' % doi
-    line2 = "## Beginning program @ %s " % str(now)
-    line3 = line0
-    print('\n'+'#' * line_length)
-
-    print_line(line0,line_length)
-    print_line(line1,line_length)
-    print(line2 + '#'*(line_length-len(line2)))
-    print('#' * line_length)
+    line3 = "## Beginning program @ %s " % str(now)
+    line4 = line0
+    
+    ## Printing formated lines
+    for item in range(5):
+        print_line(eval('line'+str(item)),line_length)
     return         
 
 def main():
@@ -378,8 +377,8 @@ def main():
     config_file = check_config(args)
 
 #     ## Global variable
-#     global skip
-#     skip = False
+    global skip
+    skip = False
 
     ## Set up FreeClimber object and load parameters
     fc = FreeClimber(config_file = config_file)
