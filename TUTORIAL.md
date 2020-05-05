@@ -232,7 +232,7 @@ This is only an example command and the `custom.prc` file is only an example fil
 
     python ./scripts/gather_files.py --parent_folder ./example_other --suffix h264 --save_file
 
-We also provide flags for `--optimization_plots` (generates files with the `spot_check.png`, `ROI.png`, and `processed.png` suffixes for optimizing the detection parameters, region of interest, and background subtraction parameters, respectively). Though this will do so for every plot.
+We also provide flags for `--optimization_plots` (generates files with the `spot_check.png`, `ROI.png`, and `processed.png` suffixes for optimizing the detection parameters, region of interest, and background subtraction parameters, respectively). Though this will do so for every video when run through the command line.
 
 For each of the scripts provided, help documentation is provided if you type:
 
