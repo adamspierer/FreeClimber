@@ -78,7 +78,7 @@ NOTE: We also recommend downloading these modules separately.
 	cd <folder of interest>
 	git clone https://github.com/adamspierer/FreeClimber.git
 	
-NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
+NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](https://github.com/adamspierer/FreeClimber/blob/master/TUTORIAL.md) for usage instructions.
 
 <h3>Test files</h3>
 
