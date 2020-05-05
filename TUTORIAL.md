@@ -202,15 +202,15 @@ When all variables are appropriately filled, press `Save parameters` to generate
 
 To facilitate researchers' ability to optimize `FreeClimber`, the GUI will also generate three figure files:
 
-    1. `<file_name>.ROI.png` - First frame of the color video with the region of interest outlined in a red rectangle. The white lines down the middle represent the predicted placement of the vial dividers, based on the distribution of flies within the frame for a more informed estimate of vial placement.
+1. `<file_name>.ROI.png` - First frame of the color video with the region of interest outlined in a red rectangle. The white lines down the middle represent the predicted placement of the vial dividers, based on the distribution of flies within the frame for a more informed estimate of vial placement.
     
 <img src="https://github.com/adamspierer/FreeClimber/blob/master/example/w1118_m_2_1.ROI.png" width="500" height="400">    
     
-    2. `<file_name>.processed.png` - Designed to help with a frame range for the `Background frames`. Three plots demonstrate what the video looks like cropped and grayscaled, as a null background, and with the background subtracted.
+2. `<file_name>.processed.png` - Designed to help with a frame range for the `Background frames`. Three plots demonstrate what the video looks like cropped and grayscaled, as a null background, and with the background subtracted.
     
 <img src="https://github.com/adamspierer/FreeClimber/blob/master/example/w1118_m_2_1.processed.png" width="400" height="500">
 
-    3. `<file_name>.spot_check.png` - Three sets of two subplots, corresponding with the distribution of certain spot metrics and where the spots lie on the image. This is especially useful for determining signal and mass thresholds.
+3. `<file_name>.spot_check.png` - Three sets of two subplots, corresponding with the distribution of certain spot metrics and where the spots lie on the image. This is especially useful for determining signal and mass thresholds.
     
 <img src="https://github.com/adamspierer/FreeClimber/blob/master/example/w1118_m_2_1.spot_check.png" width="500" height="400">  
 
