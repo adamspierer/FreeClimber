@@ -84,7 +84,7 @@ There are three different sets of video files in the `test` folder to demonstrat
 
 | `clean_background` | `diff_number_flies` | `noisy_background` | 
 | --- |---| ---|
-| <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/clean_setup.jpg" width="366" height="200">       | <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/diff_number_flies.jpg" width="366" height="200"> |  <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/example_images/noisy_background.png" width="366" height="200">  |
+| <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/clean_setup.jpg" width="366" height="200">       | <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/diff_number_flies.jpg" width="366" height="200"> |  <img src="https://github.com/adamspierer/FreeClimber/blob/master/z/noisy_background.png" width="366" height="200">  |
 
     - clean_background: contains three vials of 9 flies per vial set on visually clean background (./examples/w1118_m_2_1.h264 OR ./examples/other/clean_background_few_flies.h264)
     - diff_number_flies: contains six vials with 5, 10, 19, 23, 15, 33 flies per vial set on visually clean background (./examples_other/clean_background_different_flies.h264)
