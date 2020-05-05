@@ -1270,7 +1270,7 @@ class detector(object):
         axes[3].set_title('Mass Distribution')
         axes[3].hist(self.df_big.mass,bins = bins)
         y_max = np.histogram(self.df_big.mass,bins=bins)[0].max()
-        axes[3].vlines(self.threshold,0,y_max)
+        axes[3].vlines(self.minmass,0,y_max)
 
         ## Signal histogram
         axes[4].set_title('Signal Distribution')
