@@ -92,6 +92,8 @@ There are three different sets of video files in the `test` folder to demonstrat
 
 We've also included an additional video with a wagon-wheel effect to illustrate how the detector can still perform well, even with horizontal lines moving across the screen. See ./example\_other/clean\_background\_many\_flies\_with\_lines.h264
 
+Video files were recorded in h264 format (Raspberry Pi default) and can be incompatibile with certain media players. We recommend using [VLC media player](https://www.videolan.org/vlc/index.html).
+
 <h3>Usage</h3>
 
 The following is a general overview of the platform usage. For detailed instructions, please see our [tutorial page](https://github.com/adamspierer/FreeClimber/blob/master/TUTORIAL.md).
