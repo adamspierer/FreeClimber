@@ -65,7 +65,7 @@ For more details about creating a conda virtual environment, see [here](https://
 	pip install FreeClimber
     pip install ffmpeg-python
     
-NOTE: We also recommend downloading these modules separately.
+NOTE: We recommend downloading these two modules separately.
 
 **Using conda (still in beta testing)**:
 
