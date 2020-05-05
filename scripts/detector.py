@@ -239,9 +239,9 @@ class detector(object):
             self.n_frames = int(len(out)/self.height/self.width/3)
             image_stack = np.frombuffer(out, np.uint8).reshape([-1, self.height, self.width, 3])
         except:
-            print('!! Could not read in video file to an array. Error message (if any):', err)
+#             print('!! Could not read in video file to an array. Error message (if any):', err)
 #             self.skip_video()
-
+            pass
         return image_stack
 
     def crop_and_grayscale(self,video_array,

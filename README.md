@@ -30,7 +30,7 @@ This program was designed initially for assessing climbing performance in a *Dro
     - trackpy    [0.4.2 ]
     - wxPython   [4.0.4 ]
 
-NOTE: This platform was developed using Python 3.7.6, and also tested in a Python 3.6 environment. Earlier Python 3 versions will likely work as well but are untested.
+NOTE: We recommend using with a Python3.6 virtual environment, though it was built with a Python3.7 environment.
 
 <h3>Installing</h3>
 
@@ -60,13 +60,16 @@ We recommend running this package in an Anaconda-based virtual environment. Anac
 
 For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
 
-**Using `conda`**:
-
-	conda install -c adamspierer freeclimber
-
-**Using PyPi**: 
+**Using PyPi (recommended)**: 
 
 	pip install FreeClimber
+    pip install ffmpeg-python
+    
+NOTE: We also recommend downloading these modules separately.
+
+**Using conda (still in beta testing)**:
+
+    conda install -c adamspierer freeclimber
 
 **Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder.
 
@@ -76,7 +79,6 @@ For more details about creating a conda virtual environment, see [here](https://
 	git clone https://github.com/adamspierer/FreeClimber.git
 	
 NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
-
 
 <h3>Test files</h3>
 

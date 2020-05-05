@@ -6,7 +6,7 @@ authors = ["Adam Spierer <https://github.com/adamspierer>"]
 
 [tool.poetry.dependencies]
 ffmpeg = "1.4"
-python = "3.7.*"
+python = "3.4.*"
 matplotlib = "3.1.3"
 numpy = "1.18.1"
 pandas = "1.0.0"

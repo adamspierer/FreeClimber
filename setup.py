@@ -19,6 +19,7 @@ setup(name='FreeClimber',
       'Development Status :: 4 - Beta',
       'Intended Audience :: Developers',
       'License :: OSI Approved :: MIT License',
+      'Programming Language :: Python :: 3.6',
       'Programming Language :: Python :: 3.7'],
 
       keywords='Drosophila melanogaster climbing negative geotaxis assay background subtraction particle detection local linear regression high-throughput high throughput automated behavior quantification velocity',
