@@ -71,7 +71,7 @@ NOTE: We also recommend downloading these modules separately.
 
     conda install -c adamspierer freeclimber
 
-**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder.
+**Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder)
 
 **Cloning the git repository**:
 
