@@ -12,8 +12,8 @@ from os import walk,path
 import argparse
 from datetime import datetime
 
-## Program version
-version = '0.3'
+## FreeClimber version
+version = '0.3.1'
 
 def define_argument_parser():
     '''Defines arguments to be parsed, via argparse module.

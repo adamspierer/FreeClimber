@@ -7,7 +7,7 @@
 ## Purpose   : Graphical User Interface wrapper for FreeClimber
 
 ## Version number
-version = '0.3'
+version = '0.3.1'
 
 ## More universal modules
 import wx

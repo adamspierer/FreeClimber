@@ -6,7 +6,7 @@
 ## Date      : May 2020
 ## Purpose   : Script contains main functions used in FreeClimber package
 
-version = '0.3'
+version = '0.3.1'
 
 import os
 import sys

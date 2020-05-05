@@ -11,7 +11,7 @@
 ## [ ] Log files for videos skipped
 
 ## Version number
-version='0.3'
+version='0.3.1'
 doi =  '<link to dissertation>' ## Link to published paper or dissertation
 
 ## Importing external package(s)
