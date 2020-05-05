@@ -6,7 +6,7 @@
 
 This gif demonstrates the principle underlying how velocity is quantified:
 
-<img src="https://github.com/adamspierer/FreeClimber/raw/master/z/tutorial_0.gif" width="500" height="167">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/z/0-Tutorial_climbing.gif" width="500" height="167" align="center">
 
 On the left, blue '+' represent candidate spots, while colored circles represent 'true' spots that passed a specified threshold. Circles are blue during the most linear portion of the position vs. time (velocity) curve, and red otherwise. On the right, the mean vertical position of all points by frame show a gray line connecting the mean vertical position for all true spots identified by frame. The line of best fit corresponds with the regression line through the most linear segment, and its slope corresponds with the climbing velocity of that cohort.
 
