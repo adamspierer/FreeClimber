@@ -5,7 +5,7 @@ description = "FreeClimber is a Python-based background subtraction, particle de
 authors = ["Adam Spierer <https://github.com/adamspierer>"]
 
 [tool.poetry.dependencies]
-ffmpeg = "1.4"
+ffmpeg-python= "0.2.0"
 python = "3.4.*"
 matplotlib = "3.1.3"
 numpy = "1.18.1"

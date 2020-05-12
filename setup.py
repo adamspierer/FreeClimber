@@ -26,7 +26,7 @@ setup(name='FreeClimber',
 
       packages=find_packages(),
 #       packages=['FreeClimber'],
-      install_requires=['ffmpeg==1.4',"argparse==1.1",
+      install_requires=['ffmpeg-python==0.2.0',"argparse==1.1",
                         'pandas','numpy','scipy','pip','matplotlib==3.1.3',
                         'wxPython==4.0.4','trackpy==0.4.2'],
       zip_safe=False)
