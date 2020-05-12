@@ -5,7 +5,7 @@ with open('README.md','r') as f:
     long_description = f.read()
 
 setup(name='FreeClimber',
-      version='0.3.1',
+      version='0.3.1.1',
       description='FreeClimber is a Python-based background subtraction, particle detector used to estimate the velocity for a group of particles moving from the bottom to the top of an image, using a local linear regression.',
       long_description=long_description,
       long_description_content_type="text/markdown",
