@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: FreeClimber
-Version: 0.3.1
+Version: 0.3.1.1
 Summary: FreeClimber is a Python-based background subtraction, particle detector used to estimate the velocity for a group of particles moving from the bottom to the top of an image, using a local linear regression.
 Home-page: http://github.com/adamspierer/FreeClimber
 Author: Adam Spierer
@@ -38,7 +38,7 @@ Description: <h1>FreeClimber</h1>
             - trackpy    [0.4.2 ]
             - wxPython   [4.0.4 ]
         
-        NOTE: This platform was developed using Python 3.7.6, and also tested in a Python 3.6 environment. Earlier Python 3 versions will likely work as well but are untested.
+        NOTE: We recommend using with a Python3.6 virtual environment, though it was built with a Python3.7 environment.
         
         <h3>Installing</h3>
         
@@ -68,23 +68,25 @@ Description: <h1>FreeClimber</h1>
         
         For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
         
-        **Using `conda`**:
-        
-        	conda install -c adamspierer freeclimber
-        
-        **Using PyPi**: 
+        **Using PyPi (recommended)**: 
         
         	pip install FreeClimber
+            pip install ffmpeg-python
+            
+        NOTE: We recommend downloading these two modules separately.
         
-        **Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder.
+        **Using conda (still in beta testing)**:
+        
+            conda install -c adamspierer freeclimber
+        
+        **Download the script files** (can be done with `git clone` if user is familiar with `git` or by directly downloading the `.py` files into a single folder)
         
         **Cloning the git repository**:
         
         	cd <folder of interest>
         	git clone https://github.com/adamspierer/FreeClimber.git
         	
-        NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](<link to tutorial file>) for usage instructions.
-        
+        NOTE: As of now, the platform itself is <u>not</u> a module and these steps merely download the dependencies. The script files must be directly referenced when running the program. See our [tutorial](https://github.com/adamspierer/FreeClimber/blob/master/TUTORIAL.md) for usage instructions.
         
         <h3>Test files</h3>
         
@@ -174,5 +176,6 @@ Platform: UNKNOWN
 Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3.6
 Classifier: Programming Language :: Python :: 3.7
 Description-Content-Type: text/markdown
