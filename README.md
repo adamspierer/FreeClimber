@@ -20,15 +20,15 @@ This program was designed initially for assessing climbing performance in a *Dro
 
 <h3>Requirements</h3>
 
-    - argparse   [1.1   ]
-    - ffmpeg     [1.4   ]
-    - matplotlib [3.1.3 ]
-    - numpy      [1.18.1]
-    - pandas     [1.0.0 ]
-    - pip        [20.0.2]
-    - scipy      [1.4.1 ]
-    - trackpy    [0.4.2 ]
-    - wxPython   [4.0.4 ]
+    - argparse      [1.1   ]
+    - ffmpeg-python [0.2.0 ]
+    - matplotlib    [3.1.3 ]
+    - numpy         [1.18.1]
+    - pandas        [1.0.0 ]
+    - pip           [20.0.2]
+    - scipy         [1.4.1 ]
+    - trackpy       [0.4.2 ]
+    - wxPython      [4.0.4 ]
 
 NOTE: We recommend using with a Python3.6 virtual environment, though it was built with a Python3.7 environment.
 
