@@ -11,14 +11,14 @@
 ## [ ] Log files for videos skipped
 
 ## Version number
-version='0.3.1'
+version='0.3.2'
 doi =  '<link to dissertation>' ## Link to published paper or dissertation
 
 ## Importing external package(s)
 import os
 import sys
 import argparse
-from time import time
+from time import time,ctime
 from datetime import datetime
 from pandas import read_csv, concat
 from numpy import sort, repeat, unique
@@ -225,7 +225,55 @@ class FreeClimber(object):
         print("    - Saving:", self.path_result)
         self.slopes.to_csv(self.path_result,index=False)
         return
+
+    def create_log_header(self):
+        '''Creates a header for the completed and skipped log files'''
+        if self.args.debug: print('FreeClimber.create_log_header')
     
+        try:
+            os.mkdir(self.path_project + '/log/')
+        except:
+            pass
+        self.path_completed = self.path_project + '/log/completed.log'
+        self.path_skipped = self.path_project + '/log/skipped.log'
+        path_list,text_list = [self.path_completed,self.path_skipped],['completed','skipped']
+        time_stamp = str(ctime())
+    
+        for path,text in zip(path_list,text_list):
+            print('Creating',text,'.log file:',path)
+            with open(path, 'w') as f:
+                print('## FreeClimber ##', file=f)
+                print('##',file=f)
+                print('## Generated from configuration file:'+self.config_file, file = f)
+                print('## Run on ' + time_stamp, file = f)
+                print('##',file = f)
+                print('## Files',text,':',file = f)
+            f.close()
+        return
+
+    def log_video(self, file_name, completed=True):
+        '''Records which videos were processed and which were skipped.
+        ----
+        Inputs:
+          file_name (str): file path of video being skipped
+          completed (bool): True if successfully processed, False if skipped        
+        ----
+        Returns:
+          None'''
+        if self.args.debug: print('FreeClimber.log_video :: completed =',completed)
+    
+        ## Naming a variable
+        if completed: path = 'log/completed.log'
+        else:  path = 'log/skipped.log'
+
+        ## Appends the video_file path to the file
+        if ~completed:
+            print('Appending to',path + ':',file_name)
+        with open(self.path_project + '/' + path,'a') as f:
+            print(file_name,file = f)
+        f.close()
+        return
+        
     def print_closing(self):
         '''Print statements when program is complete. Need to add in a counter to display 
         how many were processed'''
@@ -360,6 +408,7 @@ def startup():
     line4 = line0
     
     ## Printing formated lines
+    print('\n')
     for item in range(5):
         print_line(eval('line'+str(item)),line_length)
     return         
@@ -371,29 +420,26 @@ def main():
     
     ## Defining argparse commands
     args = define_argument_parser()
-    if args.debug: print(args,'\n')
 
     ## Checking input for valid input file(s)
     config_file = check_config(args)
 
-#     ## Global variable
-    global skip
-    skip = False
-
     ## Set up FreeClimber object and load parameters
     fc = FreeClimber(config_file = config_file)
-    
+    fc.create_log_header()
+
     for File in fc.file_list:
         print(File)
-        while skip == False:
+        try:
             t0 = time()
             fc.count += 1
             fc.name = os.path.split(File)[-1]
             fc.process(video_file = File,variables = None, config_file = fc.config_file)
-            skip = True
-        fc.timer(t0)
-        skip = False
-    
+            fc.timer(t0)
+            fc.log_video(completed=True, file_name = File)
+        except:
+            fc.log_video(completed=False, file_name = File)    
+            
     ## Concatenate slopes of all .slopes.csv files into a single, results.csv file
     if args.no_concat == False:
         fc.concat_slopes()

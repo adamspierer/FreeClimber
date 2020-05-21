@@ -6,7 +6,7 @@
 ## Date      : May 2020
 ## Purpose   : Script contains main functions used in FreeClimber package
 
-version = '0.3.1'
+version = '0.3.2'
 
 import os
 import sys
@@ -67,7 +67,7 @@ class detector(object):
         if self.convert_to_cm_sec: self.conversion_factor = self.pixel_to_cm / self.frame_rate
         else: self.conversion_factor = 1
 
-        print('\n\n')
+        print('')
         self.specify_paths_details(video_file)
         self.image_stack = self.video_to_array(video_file,loglevel='panic')
         return
@@ -189,7 +189,7 @@ class detector(object):
     ## Checking to make sure variables are entered properly...still more to include
     def check_variable_formats(self):
         '''Checks to make sure at least some of the variables input formatted properly'''
-        if self.debug: print('detector.check_variables_formats')
+        if self.debug: print('detector.check_variable_formats')
         
         ## Vial number
         if self.vials < 1: 
@@ -289,7 +289,8 @@ class detector(object):
             
         if self.debug: print('detector.crop_and_grayscale: Final video array dimensions:',clean_stack.shape)
         return clean_stack
-        
+    
+    ## Subtract background
     def subtract_background(self,video_array=None,first_frame=0,last_frame=None):
         '''Generate a null background image and subtract that from each frame
         ----
@@ -316,7 +317,7 @@ class detector(object):
         return spot_stack, background   
 
 
-## Plots and views
+    ## Plots and views
     def view_ROI(self,image = None,
                  border = True,
                  x0 = 0,x1 = None, 
@@ -1076,7 +1077,7 @@ class detector(object):
         '''
         if self.debug: print('detector.loclin_plot')
         
-        def two_plot(df,color,label,first, last, ax=None):
+        def two_plot(df,color,label,first,last, ax=None):
             '''Adds the bolded flair to the local linear regression plot'''
             if self.debug: print('detector.two_plot')
             
@@ -1237,7 +1238,6 @@ class detector(object):
         axes[0].scatter([0,self.w],[0,self.h],alpha=0,marker='.')
 
         ## Setting plots for scatterplot overlay on a selected frame
-        # frame=40
         if self.debug: print('detector.parameter_testing: Subplot 1: Test frame')
         axes[1].set_title('Frame: '+str(self.frame_0))
         axes[1].imshow(self.clean_stack[self.frame_0], cmap = cm.Greys_r)
@@ -1280,37 +1280,44 @@ class detector(object):
 
         ## Setting plots for local linear regression
         df = self.df_filtered.sort_values(by='frame')
-        df['y'] = self.invert_y(df)
+        df['y'] = self.invert_y(df) # Reindexing points along y-axis
+        
+        ## LocLin plot for each vial
         for V in range(1,self.vials + 1):
             label = 'Vial '+str(V)
             color = self.color_list[V-1]
             _df = df[df.vial == V]
 
+            ## Converting to cm per sec if specified
             convert_x,convert_y = 1,1
             if self.convert_to_cm_sec:
                 convert_x,convert_y = self.frame_rate,self.pixel_to_cm
             _df.loc[:,'y'] = _df['y'] / convert_y                
             _df.loc[:,'frame'] = _df['frame'] / convert_x
 
+            ## Local linear regression
             begin = self.local_linear_regression(_df).iloc[0].first_frame.astype(int)
             end = begin + self.window        
             frames = begin,end
             
+            ## Plotting all points
             axes[2].plot(_df.groupby('frame').frame.mean(),
                _df.groupby('frame').y.mean(),alpha = .35, color = color,label='') 
+            
+            ## Plotting most linear points
             _df = _df[(_df.frame >= begin) & (_df.frame <= end)]
-
             axes[2].plot(_df.groupby('frame').frame.mean(),
                _df.groupby('frame').y.mean(),color = color, label = label)
 
+        ## Setting labels
         label_y,label_x = '(pixels)','Frames'
         if self.convert_to_cm_sec: 
-            label_x = 'Seconds'
-            label_y = '(cm)'
-
+            label_x,label_y = 'Seconds','(cm)'
         labels = ['Mean vertical position over time','Mean y-position %s' % label_y,label_x]
         axes[2].set(title = labels[0], ylabel=labels[1],xlabel=labels[2]) 
         axes[2].legend(frameon=False, fontsize='x-small')   
+
+        ## Executing final steps
         self.step_4()
         self.step_5()
         self.step_6()
