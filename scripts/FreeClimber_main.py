@@ -150,16 +150,22 @@ class FreeClimber(object):
         ## Return a sorted list of all files with the file suffix
         if undone == False:
             _list = sorted(unique(_list1))
+            print('')
+            print(_list)
+            print('')
+
             return _list
 
         ## Return a sorted list of all undone files            
         if undone:
             _list1,_list2 = set(_list1),set(_list2)
             _list = list(_list1.difference(_list2))
-            _list = [item+'.'+endswith for item in 	_list]
+#             _list = [item+'.'+endswith for item in 	_list]
             _list = sorted(	_list)
-            
-            if ~len(	_list):
+            print('')
+            print(_list)
+            print('')
+            if ~len(_list):
                 print('All files previously processed, re-evaluate your inputs if this message is a surprise.')
             return 	_list
 
