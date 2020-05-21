@@ -42,15 +42,15 @@ For more details about creating a conda virtual environment, see [here](https://
 
 Once the environment is set up and activated, we can install the following dependencies.
 
-    - argparse   [1.1   ]
-    - ffmpeg     [1.4   ]
-    - matplotlib [3.1.3 ]
-    - numpy      [1.18.1]
-    - pandas     [1.0.0 ]
-    - pip        [20.0.2]
-    - scipy      [1.4.1 ]
-    - trackpy    [0.4.2 ]
-    - wxPython   [4.0.4 ]
+    - argparse      [1.1   ]
+    - ffmpeg-python [0.2.0   ]
+    - matplotlib    [3.1.3 ]
+    - numpy         [1.18.1]
+    - pandas        [1.0.0 ]
+    - pip           [20.0.2]
+    - scipy         [1.4.1 ]
+    - trackpy       [0.4.2 ]
+    - wxPython      [4.0.4 ]
 
 NOTE: This platform was developed using Python 3.7.6, and tested in a Python 3.6 environment. We recommend running in a Python 3.6 environment for best results, earlier Python versions are untested.
 
