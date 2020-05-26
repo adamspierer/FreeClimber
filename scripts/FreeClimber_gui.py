@@ -82,20 +82,41 @@ class main_gui(wx.Frame):
 
         ## Passing individual inputs from GUI to a list
         self.update_names()
-        self.input_names = ['x','y','w','h','frame_0','blank_0','blank_n',
-        'threshold','diameter','minmass','maxsize','vials','window','pixel_to_cm','frame_rate',
-        'vial_id_vars','naming_convention','path_project','file_suffix','convert_to_cm_sec'] #'frame_n',
+        self.input_names = ['x','y',
+                            'w','h',
+                            'frame_0','blank_0',
+                            'blank_n','crop_0',
+                            'crop_n','threshold',
+                            'diameter','minmass',
+                            'maxsize','ecc_low',
+                            'ecc_high','vials',
+                            'window','pixel_to_cm',
+                            'frame_rate','vial_id_vars',
+                            'outlier_TB','outlier_LR',
+                            
+                            'naming_convention','path_project','file_suffix',
+                            
+                            'convert_to_cm_sec','trim_outliers']
         self.parameter_names = ['self.input_'+item for item in self.input_names]
-        self.input_values = [self.input_x,self.input_y,self.input_w,self.input_h,
+        self.input_values = [## int
+                             self.input_x,self.input_y,
+                             self.input_w,self.input_h,
                              self.input_frame_0,self.input_blank_0,
-                             self.input_blank_n,self.input_threshold,self.input_diameter,
-                             self.input_minmass,self.input_maxsize,self.input_vials,
-                             self.input_window,self.input_pixel_to_cm,self.input_frame_rate,
-                             self.input_vial_id_vars,self.input_naming_convention,self.input_path_project,
-                             self.input_file_suffix,self.input_convert_to_cm_sec] # self.input_frame_n
+                             self.input_blank_n,self.input_crop_0,
+                             self.input_crop_n,self.input_threshold,
+                             self.input_diameter,self.input_minmass,
+                             self.input_maxsize,self.input_ecc_low,
+                             self.input_ecc_high,self.input_vials,
+                             self.input_window,self.input_pixel_to_cm,
+                             self.input_frame_rate,self.input_vial_id_vars,
+                             self.input_outlier_TB,self.input_outlier_LR,
+                             ## str
+                             self.input_naming_convention,self.input_path_project,self.input_file_suffix,
+                             ## bool
+                             self.input_convert_to_cm_sec,self.input_checkBox_trim_outliers]
 
         ## Enable all buttons
-        button_list = ['browse_video','reload_video','test_parameters','store_parameters']#,'run_analysis']
+        button_list = ['browse_video','reload_video','test_parameters','store_parameters']
         for button in button_list:
             exec('self.button_' + button + '.Enable(True)')
 
@@ -110,26 +131,31 @@ class main_gui(wx.Frame):
         if args.debug: print('main_gui.update_variables')
         variables = []
         
+        
         ## Including integers
-        for item,jtem in zip(self.input_names[:16],self.input_values[:17]):
+        for item,jtem in zip(self.input_names[:22],self.input_values[:22]):
+#             print('int',item,jtem)
             phrase = str(item + '='+ jtem.GetValue())
             if args.debug: print('    '+phrase)
             variables.append(phrase)
 
         ## Including strings - type I
-        for item,jtem in zip(self.input_names[16:18],self.input_values[16:18]):
+        for item,jtem in zip(self.input_names[22:24],self.input_values[22:24]):
+#             print('str-I',item,jtem)
             phrase = str(item + '="'+ jtem.GetValue()+'"')
             if args.debug: print('    '+phrase)
             variables.append(phrase)
 
         ## Including strings - type II
-        for item,jtem in zip(self.input_names[18:19],self.input_values[18:19]):
+        for item,jtem in zip(self.input_names[24:25],self.input_values[24:25]):
+#             print('str-II',item,jtem)
             phrase = str(item + '="'+ str(jtem)+'"')
             if args.debug: print(phrase)
             variables.append(phrase)
         
         ## Including booleans
-        for item,jtem in zip(self.input_names[19:],self.input_values[19:]):
+        for item,jtem in zip(self.input_names[25:],self.input_values[25:]):
+#             print('bool',item,jtem)
             phrase = str(item + '=%s' % str(jtem.GetValue()))
             if args.debug: print('    '+phrase)
             variables.append(phrase)
@@ -180,7 +206,12 @@ class main_gui(wx.Frame):
             ## Auto-set GUI parameters from the video
             self.input_blank_0.SetValue('0')
             self.input_blank_n.SetValue(str(self.detector.n_frames))
+            self.input_crop_0.SetValue('0')
+            self.input_crop_n.SetValue(str(self.detector.n_frames))
             self.input_frame_0.SetValue('0')
+            self.input_ecc_low.SetValue('0')
+            self.input_ecc_high.SetValue('1')
+            self.input_ecc_high.SetValue('1')
             self.input_path_project.SetValue(self.folder)
             self.input_naming_convention.SetValue(self.name)
             self.input_vial_id_vars.SetValue(str(len(self.input_naming_convention.GetValue().split('_'))))
@@ -201,10 +232,8 @@ class main_gui(wx.Frame):
 
             ## Enable Test parameter button if disabled from prior testing
             self.button_test_parameters.Enable(True)
-            self.x0 = 0
-            self.y0 = 0
-            self.x1 = self.detector.width
-            self.y1 = self.detector.height
+            self.x0,self.y0 = 0, 0
+            self.x1,self.y1 = self.detector.width,self.detector.height
         
             ## Display the first frame of the video in the GUI
             self.update_ROIdisp()
@@ -370,6 +399,7 @@ class main_gui(wx.Frame):
         '''Runs the 'save_parameter' function for creating the configuration file'''
         if args.debug: print('main_gui.OnButton_strParButton')
         self.save_parameter()
+        self.button_store_parameters.SetBackgroundColour(wx.Colour(241,241,241))
 
     def set_config_file(self):
         '''Set path for the project folder'''
@@ -560,7 +590,7 @@ class main_gui(wx.Frame):
               label=u'Diameter:', name='text_diameter', parent=self.panel1,
               pos=wx.Point(col3 ,30), size=wx.Size(medium_box_dimensions), style=0)
         self.input_diameter = wx.TextCtrl(id=wxID_input_diameter,
-              name=u'input_diameter', parent=self.panel1, pos=wx.Point(col3 + 90,30), 
+              name=u'input_diameter', parent=self.panel1, pos=wx.Point(col3 + 100,30), 
               size=wx.Size(medium_box_dimensions), style=0, value=u'7')
         
         ## Maximum spot diameter
@@ -568,15 +598,15 @@ class main_gui(wx.Frame):
               label=u'MaxDiameter:', name='text_maxsize', parent=self.panel1,
               pos=wx.Point(col3,55), size=wx.Size(medium_box_dimensions), style=0)
         self.input_maxsize = wx.TextCtrl(id=wxID_input_maxsize,
-              name=u'input_maxsize', parent=self.panel1, pos=wx.Point(col3 + 90,55), 
+              name=u'input_maxsize', parent=self.panel1, pos=wx.Point(col3 + 100,55), 
               size=wx.Size(medium_box_dimensions), style=0, value=u'11')
 
         ## Minimum spot 'mass'
-        self.text_threshold = wx.StaticText(id=wxID_text_minmass,
-              label=u'MinMass:', name='text_threshold', parent=self.panel1,
+        self.text_minmass = wx.StaticText(id=wxID_text_minmass,
+              label=u'MinMass:', name='text_minmass', parent=self.panel1,
               pos=wx.Point(col3,80), size=wx.Size(medium_box_dimensions), style=0)
         self.input_minmass = wx.TextCtrl(id=wxID_input_minmass,
-              name=u'input_minmass', parent=self.panel1, pos=wx.Point(col3 + 90,80), 
+              name=u'input_minmass', parent=self.panel1, pos=wx.Point(col3 + 100,80), 
               size=wx.Size(medium_box_dimensions), style=0, value=u'100')
 
         ## Spot threshold
@@ -584,9 +614,22 @@ class main_gui(wx.Frame):
               label=u'Threshold:', name='text_threshold', parent=self.panel1,
               pos=wx.Point(col3, 105), size=wx.Size(medium_box_dimensions), style=0)
         self.input_threshold = wx.TextCtrl(id=wxID_input_threshold,
-              name=u'input_threshold', parent=self.panel1, pos=wx.Point(col3 + 90,105),
+              name=u'input_threshold', parent=self.panel1, pos=wx.Point(col3 + 100,105),
               size=wx.Size(medium_box_dimensions), style=0, value=u'"auto"')
         
+        ## Eccentricity range
+        self.text_ecc = wx.StaticText(id=wxID_text_ecc,
+              label=u'Ecc/circularity:', name='text_ecc',
+              parent=self.panel1, pos=wx.Point(col3, 130), size=wx.Size(medium_box_dimensions),
+              style=0)
+        self.input_ecc_low = wx.TextCtrl(id=wxID_input_ecc_low,
+              name=u'input_ecc_low', parent=self.panel1, pos=wx.Point(col3+ 100, 130),
+            size=wx.Size(small_box_dimensions), style=0, value=u'0')
+        self.input_ecc_high = wx.TextCtrl(id=wxID_input_ecc_high,
+              name=u'input_ecc_high', parent=self.panel1, pos=wx.Point(col3 + 140,130),
+              size=wx.Size(small_box_dimensions), style=0, value=u'0')        
+        
+        #### Step 4 arguments
         ## Check frames
         self.text_step_4 = wx.StaticText(id=wxID_text_step_4,
               label=u'Step 4: Additional parameters', name='text_step_4', parent=self.panel1, 
@@ -601,38 +644,63 @@ class main_gui(wx.Frame):
         self.input_blank_0 = wx.TextCtrl(id=wxID_input_blank_0,
               name=u'input_blank_0', parent=self.panel1, pos=wx.Point(col4+ 130, 30),
             size=wx.Size(small_box_dimensions), style=0, value=u'0')
-
         self.input_blank_n = wx.TextCtrl(id=wxID_input_blank_n,
               name=u'input_blank_n', parent=self.panel1, pos=wx.Point(col4 + 170,30),
+              size=wx.Size(small_box_dimensions), style=0, value=u'0')
+
+        ## crop frames
+        self.text_crop_frames = wx.StaticText(id=wxID_text_crop_frames,
+              label=u'Crop frames:', name='text_crop_frames',
+              parent=self.panel1, pos=wx.Point(col4, 55), size=wx.Size(medium_box_dimensions),
+              style=0)
+        self.input_crop_0 = wx.TextCtrl(id=wxID_input_crop_0,
+              name=u'input_crop_0', parent=self.panel1, pos=wx.Point(col4+ 130, 55),
+            size=wx.Size(small_box_dimensions), style=0, value=u'0')
+        self.input_crop_n = wx.TextCtrl(id=wxID_input_crop_n,
+              name=u'input_crop_n', parent=self.panel1, pos=wx.Point(col4 + 170,55),
               size=wx.Size(small_box_dimensions), style=0, value=u'0')
 
         ## Check frames
         self.text_check_frames = wx.StaticText(id=wxID_text_check_frames,
               label=u'Check frames:', name='text_check_frames', parent=self.panel1,
-              pos=wx.Point(col4, 55), size=wx.Size(115, 17), style=0)
+              pos=wx.Point(col4, 80), size=wx.Size(115, 17), style=0)
 
         self.input_frame_0 = wx.TextCtrl(id=wxID_input_frame_0,
-              name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 55),
+              name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 80),
                size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Vials
         self.text_vials = wx.StaticText(id=wxID_text_vials,
               label=u'Number of vials:', name='text_vials',
-              parent=self.panel1, pos=wx.Point(col4, 80), size=wx.Size(133, 22),
+              parent=self.panel1, pos=wx.Point(col4, 105), size=wx.Size(133,22),
               style=0)
         self.input_vials = wx.TextCtrl(id=wxID_input_vials,
-              name=u'input_vials', parent=self.panel1, pos=wx.Point(col4 + 130, 80), 
+              name=u'input_vials', parent=self.panel1, pos=wx.Point(col4+130,105), 
               size=wx.Size(small_box_dimensions), style=0, value=u'1')
         
         ## Window size
         self.text_window = wx.StaticText(id=wxID_text_window,
               label=u'Window size:', name='text_window',
-              parent=self.panel1, pos=wx.Point(col4, 105), size=wx.Size(133, 22),
+              parent=self.panel1, pos=wx.Point(col4, 130), size=wx.Size(133,22),
               style=0)
         self.input_window = wx.TextCtrl(id=wxID_input_window,
-              name=u'input_window', parent=self.panel1, pos=wx.Point(col4 + 130, 105), 
+              name=u'input_window', parent=self.panel1, pos=wx.Point(col4+130,130), 
               size=wx.Size(small_box_dimensions), style=0, value='1')    
           
+
+        ## Edge trim
+        self.input_checkBox_trim_outliers = wx.CheckBox(id=wxID_check_box_outlier,
+              label=u'Trim outliers? (TB                      LR)', name=u'checkBox_outlier',
+              parent=self.panel1, pos=wx.Point(col4, 155), size=wx.Size(250,22),
+              style=0)
+        self.input_checkBox_trim_outliers.SetValue(False)
+        self.input_outlier_TB = wx.TextCtrl(id=wxID_outlier_TB,
+              name=u'input_outlier_TB', parent=self.panel1, pos=wx.Point(col4+130,155),
+            size=wx.Size(small_box_dimensions), style=0, value=u'1')
+        self.input_outlier_LR = wx.TextCtrl(id=wxID_outlier_LR,
+              name=u'input_outlier_LR', parent=self.panel1, pos=wx.Point(col4+170,155),
+              size=wx.Size(small_box_dimensions), style=0, value=u'3')
+
 
         self.text_step_5 = wx.StaticText(id=wxID_text_step_5,
               label=u'Step 5: Naming parameters', name='text_step_5', parent=self.panel1, 
@@ -645,7 +713,7 @@ class main_gui(wx.Frame):
               parent=self.panel1, pos=wx.Point(col5, 30), size=wx.Size(medium_box_dimensions),
               style=0)
         self.input_naming_convention = wx.TextCtrl(id=wxID_input_naming_convention,
-              name=u'input_naming_convention', parent=self.panel1, pos=wx.Point(col5, 50), 
+              name=u'input_naming_convention', parent=self.panel1, pos=wx.Point(col5,50), 
               size=wx.Size(large_box_dimensions), style=0, value='') 
         
         ## Variables
@@ -659,11 +727,11 @@ class main_gui(wx.Frame):
         
         self.text_path_project = wx.StaticText(id=wxID_text_path_project,
               label=u"Project path:", name='text_path_project',
-              parent=self.panel1, pos=wx.Point(col3, 145), size=wx.Size(medium_box_dimensions),
+              parent=self.panel1, pos=wx.Point(col4-45, 180), size=wx.Size(medium_box_dimensions),
               style=0)
         self.input_path_project = wx.TextCtrl(id=wxID_input_path_project,
-              name=u'input_path_project', parent=self.panel1, pos=wx.Point(col3 + 90, 145), 
-              size=wx.Size(505,22), style=0, value='') 
+              name=u'input_path_project', parent=self.panel1, pos=wx.Point(col4 + 40, 180), 
+              size=wx.Size(350,22), style=0, value='') 
 
 
         ## Bottom panels
@@ -805,19 +873,22 @@ wxID_text_minmass,wxID_input_minmass,
 wxID_text_threshold, wxID_input_threshold,
 wxID_text_maxsize, wxID_input_maxsize,
 wxID_text_diameter, wxID_input_diameter,
+wxID_text_ecc, wxID_input_ecc_low, wxID_input_ecc_high,
 wxID_text_x, wxID_input_x,
 wxID_text_y, wxID_input_y,
 wxID_text_h, wxID_input_h,
 wxID_text_w, wxID_input_w,
 wxID_text_check_frames, wxID_input_frame_0, 
 wxID_text_background_frames,wxID_input_blank_0, wxID_input_blank_n,
+wxID_text_crop_frames,wxID_input_crop_0,wxID_input_crop_n,
 wxID_text_vials, wxID_input_vials,
 wxID_text_window, wxID_input_window,
 wxID_text_pixel_to_cm,wxID_input_pixel_to_cm,
+wxID_check_box_outlier,wxID_outlier_TB,wxID_outlier_LR,
 wxID_text_naming_convention,wxID_input_naming_convention,
 wxID_text_vial_id_vars,wxID_input_vial_id_vars,
 wxID_text_path_project,wxID_input_path_project,
-wxID_input_convert_to_cm_sec,wxID_check_box_ROI] = [wx.ID_ANY for item in range(51)] 
+wxID_input_convert_to_cm_sec,wxID_check_box_ROI] = [wx.ID_ANY for item in range(60)] 
 
 
 ## Basic GUI sizes and spacers

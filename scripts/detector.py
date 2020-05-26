@@ -62,7 +62,6 @@ class detector(object):
             self.load_for_main(config_file = config_file)
         self.check_variable_formats()
 
-        
         ## Create a conversion factor
         if self.convert_to_cm_sec: self.conversion_factor = self.pixel_to_cm / self.frame_rate
         else: self.conversion_factor = 1
@@ -228,7 +227,6 @@ class detector(object):
             self.height = int(video_info['height'])
         except:
             print('!! Could not read in video file metadata')
-#             self.skip_video()
         
         ## Converting video to nd-array    
         try:
@@ -239,9 +237,8 @@ class detector(object):
             self.n_frames = int(len(out)/self.height/self.width/3)
             image_stack = np.frombuffer(out, np.uint8).reshape([-1, self.height, self.width, 3])
         except:
-#             print('!! Could not read in video file to an array. Error message (if any):', err)
-#             self.skip_video()
-            pass
+            print('!! Could not read in video file to an array. Error message (if any):', err)
+
         return image_stack
 
     def crop_and_grayscale(self,video_array,
@@ -344,26 +341,44 @@ class detector(object):
         if self.debug: print('detector.view_ROI')
 
         ## Defaults to first frame of image stack if None specified
+        if self.debug: print('detector.view_ROI :: Setting frame')
         if image == None:
             image = self.image_stack[0]
         
         ## Plots the slice of nd-array
+        if self.debug: print('detector.view_ROI :: Plotting image')
         plt.imshow(image,cmap=cm.Greys_r, **kwargs)
         
-        ## Draws lines between vials
-        if bin_lines:
-            for item in self.bin_lines:
-                plt.vlines(self.x + item, y0, y1, color = 'w', alpha = .8, linewidth = 1)
-
         ## Draws a red rectangle over the region of interest
+        if self.debug: print('detector.view_ROI :: Draw ROI')
         if border:
             if x1 == None: x1 = self.image_stack[0].shape[1]
             if y1 == None: y1 = self.image_stack[0].shape[0]
             plt.hlines(y0,x0,x1, color = color, alpha = .7)
             plt.hlines(y1,x0,x1, color = color, alpha = .7)
             plt.vlines(x0,y0,y1, color = color, alpha = .7)
-            plt.vlines(x1,y0,y1, color = color, alpha = .7)
+            plt.vlines(x1,y0,y1, color = color, alpha = .7, label='ROI')
 
+        ## Draws box to denote where outlier trim lines are
+        if self.debug: print('detector.view_ROI :: Trim outlier lines (if selected)')
+        if self.trim_outliers:
+            lc,rc,tc,bc = self.left_crop,self.right_crop, self.top_crop,self.bottom_crop
+            plt.vlines(x0+lc,y0+bc,y0+tc,color = 'c',alpha = .7, linewidth=.5)
+            plt.vlines(x0+rc,y0+bc,y0+tc,color = 'c',alpha = .7, linewidth=.5)
+            plt.hlines(y0+bc,x0+lc,x0+rc,color = 'c',alpha = .7, linewidth=.5)
+            plt.hlines(y0+tc,x0+lc,x0+rc,color = 'c',alpha = .7, linewidth=.5, 
+                        label='Outlier trim')
+
+        ## Draws lines between vials
+        if self.debug: print('detector.view_ROI :: Drawing vial/bin lines')
+        if bin_lines:
+            for item in self.bin_lines[:-1]:
+                plt.vlines(self.x + item, y0, y1, color = 'w', alpha = .8, linewidth = 1)
+            plt.vlines(self.x + self.bin_lines[-1], y0, y1, color = 'w', alpha = .8, 
+                        linewidth = 1, label='Vial boundaries')
+        
+        plt.legend()
+        plt.tight_layout()
         return
 
     def display_images(self, cropped_converted, 
@@ -475,15 +490,21 @@ class detector(object):
         for c, p in zip(col, patches):
             plt.setp(p, 'facecolor', set_cm(c))
     
+        ## Getting height of vertical line
+        y_max = np.histogram(spots[metric],bins=bins)[0].max()    
+
+        ## Plotting vertical line for eccentricity and mass
+        if metric == 'ecc': x_pos = [self.ecc_low,self.ecc_high]
+        if metric == 'mass': x_pos = [self.minmass]
+        if metric == 'ecc' or metric == 'mass': plt.vlines(x_pos,0,y_max,color = 'gray')
+            
         ## Estimate auto-threshold
         if predict_threshold:
             _threshold = self.find_threshold(spots[metric],bins = bins)
-            y_max = np.histogram(spots[metric],bins=bins)[0].max()
             plt.vlines(_threshold,0,y_max,color = 'gray',label='Auto')
 
         ## Add in user-defined threshold vs. auto
         if isinstance(threshold, int) or isinstance(threshold, float):
-            y_max = np.histogram(spots[metric],bins=bins)[0].max()
             plt.vlines(threshold,0,y_max,color = 'k', label='User-defined')
             if predict_threshold:
                 plt.legend(frameon=False)
@@ -591,25 +612,23 @@ class detector(object):
 
         ## Main spot detection function
         df = self.find_spots(stack = self.spot_stack,
-                                      quiet=True,invert=True,
-                                      diameter=self.diameter,
-                                      minmass=self.minmass,
-                                      maxsize=self.maxsize)
+                             quiet=True,invert=True,
+                             diameter=self.diameter,
+                             minmass=self.minmass,
+                             maxsize=self.maxsize)
 
         ## Catch if there are no spots detected
         if df.shape[0] == 0:
-#             print('\n\Skipping video: No spots detected. Try modifying diameter, maxsize, or minmass parameters')
-#             self.skip_video()
-            print('\n\nExiting program: No spots detected. Try modifying diameter, maxsize, or minmass parameters')
+            print('!! Skipping video: No spots detected. Try modifying diameter, maxsize, or minmass parameters')
             raise SystemExit
         
-        ## Round detector outputs
+        ## Rounding detector outputs
         df['x'] = df.x.round(2)
         df['y'] = df.y.round(2)
         df['t'] = [round(item/self.frame_rate,3) for item in df.frame]
         df['mass'] = df['mass'].astype(int)
-        df['size'] = df.size.round(4)
-        df['ecc'] = df.ecc.round(4)
+        df['size'] = df.size.round(3)
+        df['ecc'] = df.ecc.round(3)
         df['signal'] = df.signal.round(2)
         df['raw_mass'] = df['mass'].astype(int)
         df['ep'] = df.ep.round(1)
@@ -636,7 +655,7 @@ class detector(object):
         peaks = find_peaks(x_array)[0]
         prominences = peak_prominences(x_array,peaks)
         threshold = find_peaks(x_array, prominence=np.max(prominences))[0][0]
-        if self.debug: print('detector.find_threshold @ %s ' % threshold)
+        if self.debug: print('                   Threshold =',threshold)
         return threshold
 
     def invert_y(self,spots):
@@ -654,7 +673,7 @@ class detector(object):
         inv_y = abs(spots.y - spots.y.max())
         return inv_y
     
-    def create_df_by_vial(self):
+    def get_slopes(self):
         '''Creates a dictionary with keys for vials and values for the DataFrame sliced by
         vial. It will also calculate the local linear regression for each vial and
         returns the DataFrame containing all the slopes and linear regression statistics
@@ -670,39 +689,99 @@ class detector(object):
           result (dict) : DataFrame containing the local linear regression statistics
             by vial
           vial (dict) : Dictionary of DataFrames sliced by vial, keys are vials and values
-            are DataFrames
-        '''
-        if self.debug: print('detector.create_df_by_vial')
+            are DataFrames'''
+        if self.debug: print('detector.get_slopes')
 
         ## Create empty dictionaries
         self.vial,self.result = dict(),dict()
 
         ## Slicing DataFrame (df.filtered) by vial and assigning slices to dictionary keys (vials)
-        for i in range(1,self.vials + 1):
-            ## Set dict key to '1' if only 1 vial, otherwise set dict key to vial number
-            if i == 1: self.vial[i] = self.df_filtered
-            else: self.vial[i] = self.df_filtered[self.df_filtered.vial==i]
+        for i in range(1,self.vials + 2):
+            try:
+                ## Set dict key to '1' if only 1 vial, otherwise set dict key to vial number
+                if self.vials == 1 or i == self.vials + 1: self.vial[i] = self.df_filtered
+                else: self.vial[i] = self.df_filtered[self.df_filtered.vial==i]
             
-            ## Setting the result to the result from the local linear regression
-            self.result[i] = self.local_linear_regression(self.vial[i]).iloc[0].tolist()
+                ## Setting the result to the result from the local linear regression
+                self.result[i] = self.local_linear_regression(self.vial[i]).iloc[0].tolist()
             
-            ## Add vial_ID to the result
-            vial_ID = ['_'.join(self.vial_ID) + '_'+ str(i)]
-            self.result[i] = vial_ID + self.result[i]
-            # self.result[i] = ['_'.join(self.vial_ID) + str(i)] + self.result[i] ## Sometimes issues with the name
+                ## Add vial_ID to the result
+                if i == self.vials + 1: v = 'all'
+                else: v = i
+                vial_ID = ['_'.join(self.vial_ID) + '_'+ str(v)]
+                self.result[i] = vial_ID + self.result[i]
             
-            ## Rounding results so they are more manageable and require less space.
-            self.result[i][1:3] = [int(item) for item in self.result[i][1:3]]
-            self.result[i][3:] = [round(item,4) for item in self.result[i][3:]]
+                ## Rounding results so they are more manageable and require less space.
+                self.result[i][1:3] = [int(item) for item in self.result[i][1:3]]
+                self.result[i][3:] = [round(item,4) for item in self.result[i][3:]]
+            except:
+                print('Warning:: Could not process vial %s' % i)
         return
 
-    def bin_vials(self, df, vials):
+    def get_trim_lines(self,df,edge = 'top',sensitivity=1):
+        '''Calculates spacial thresholds for cropping outlier points at the edge of window
+        ----
+        Inputs:
+          df (DataFrame): DataFrame of all points to consider
+          edge (str) {'top'|'bottom','left','right'}: Which edge to trim
+           sensitivity (float): How sensitive to make the thresholding
+        ----
+        Returns:
+          crop (float): Cutoff threshold'''
+        if self.debug: print('detector.get_trim_lines ::')
+        for _edge in edge:
+            _list,diff_list = [],[]
+
+            # Define axis
+            if edge == 'top' or edge == 'bottom': axis = 'y'
+            if edge == 'left' or edge == 'right': axis = 'x'
+
+            # Define quantile starting value
+            if edge == 'left' or edge == 'bottom': quant = 0
+            if edge == 'right' or edge == 'top': quant = 0.96
+
+            ## Find quantile boundaries
+            for i in range(5):
+                val = df[axis].quantile(quant + i * 0.01)
+                _list.append(val)
+
+            ## Get difference between quantile boundaries
+            for i in range(4):
+                diff_list.append(abs(_list[i]-_list[i+1]))
+
+            ## Calculate boundary, cutoff, and thresholds
+            ## --boundary as most extreme value
+            ## --cutoff as median 0-4 or 95-99 percentiles x scalar (sensitivity)
+            ## --threshold as difference between boundary and cutoff
+            ## --crop as value to crop points at 
+        
+            if 'right' in edge or 'top' in edge:
+                boundary = _list[-1] # Max value
+                cutoff = np.median(diff_list[:-1]) * sensitivity
+                threshold = boundary - cutoff
+
+                if cutoff < threshold: crop = boundary - cutoff
+                else: crop = cutoff
+                if self.debug: print('detector.get_trim_lines ::',edge,'@',crop)
+                return crop
+
+            if 'left' in edge or 'bottom' in edge:
+                boundary = _list[0] # Min value
+                cutoff = np.median(diff_list[1:]) * sensitivity 
+                threshold = boundary + cutoff
+            
+                if cutoff > threshold: crop = boundary + cutoff
+                else: crop = boundary
+                if self.debug: print('detector.get_trim_lines ::',edge,'@',crop,'(no crop)')            
+                return crop
+                
+    def bin_vials(self, df, vials, percentage=1,top=False):
         '''Bin spots into vials. Function takes into account all points along the x-axis, 
           and divides them into specified number of bins based on the min and max
           points in the array.
         ----
         Inputs:
-          df (DataFrame)L
+          df (DataFrame):
           vials (int): Number of vials in video
         Returns:
           bin_lines (list): Binning intervals along the x-axis
@@ -710,19 +789,21 @@ class detector(object):
         if self.debug: print('detector.bin_vials')
 
         ## Bin vials
-        if vials > 1:
+        if vials == 1:
+            bin_lines = [df.x.min(),df.x.max()]
+            spot_assignments = np.repeat(1,df.shape[0])
+        else: ## More than 1 vial
             _labels = range(1,vials+1)
             bin_lines = pd.cut(df.x,vials,include_lowest=True,retbins=True)[1]
             spot_assignments = pd.cut(df.x, bins=bin_lines, labels=_labels)
-
+            spot_assignments = pd.Series(spot_assignments).astype('int')
+        
             ## Checks to make sure all vials have at least one spot. Important if a middle vial is absent or vials binned incorrectly.
             counts = np.unique(spot_assignments, return_counts = True)
             for v,c in zip(counts[0], counts[1]):
                 if c == 0:
                     print('Warning: vial',v,'is empty and cannot be evaluated')
-        else:
-            bin_lines = [df.x.min(),df.x.max()]
-            spot_assignments = np.repeat(1,df.shape[0])
+
         return bin_lines, spot_assignments
 
 
@@ -794,35 +875,27 @@ class detector(object):
           None
         '''
         print('-- [ Step 1  ] Cleaning and format image stack')
-        y = self.y
-        y_max = int(y + self.h)
-        x = self.x
-        x_max = int(x + self.w)
+        x,y = self.x,self.y
+        x_max, y_max = int(x + self.w),int(y + self.h)
         stack = self.image_stack
+        
         if grayscale:
             self.clean_stack = self.crop_and_grayscale(stack,
                          y=y, y_max=y_max,
-                         x=x, x_max=x_max)
+                         x=x, x_max=x_max,
+                         first_frame=self.crop_0, last_frame=self.crop_n)
         else:
             self.clean_stack = self.crop_and_grayscale(stack,
                          y=y, y_max=y_max,
-                         x=x, x_max=x_max)
+                         x=x, x_max=x_max,
+                         first_frame=self.crop_0, last_frame=self.crop_n)                        
         if self.debug: print('detector.step_1 cropped and grayscale dimensions: ', self.clean_stack.shape)
 
         ## Subtracts background to generate null background image and spot stack
         self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack)
         if self.debug: print('detector.step_1 spot_stack and null background created')
         
-        ## Creating image plot with rectangle superimposed over first frame
-        if gui:
-            plot_name = self.name_nosuffix + '.processed.png'
-
-            plt.figure()
-            self.display_images(self.clean_stack,self.background,self.spot_stack,frame=20)
-            plt.savefig(self.name_nosuffix + '.processed.png', dpi=100)
-            plt.close()
-            if self.debug: print(' '*16 + '--> Saved:',plot_name.split('/')[-1])
-        return ## checkpoint
+        return
 
 
     def step_2(self, gui = False):
@@ -834,40 +907,135 @@ class detector(object):
         Returns:
           None
         '''
-        print('-- [ Step 2  ] Creating and manipulating DataFrames')
+        print('-- [ Step 2  ] Identifying spots')
 
         ## Particle detection step
-        print('-- [ Step 2a ]   - Detecting flies')
         self.df_big = self.particle_finder(minmass=self.minmass,diameter=self.diameter,
                                             maxsize=self.maxsize, invert=True)
-        if self.debug: print('-- [ Step 2b ]   - Detecting flies: df_big dimensions:', self.df_big.shape)
-                
-        print('-- [ Step 2b ]   - Assigning spots True/False status and vial/lane number')        
-        ## Auto-detecting threshold
-        if self.threshold == 'auto':
-            self.threshold = self.find_threshold(self.df_big.signal)
+        if self.debug: print('                   Identified %s spots' % self.df_big.shape[0])
+
+        return
+
+
+    def step_3(self, gui = False):
+        '''Visualizes spot metrics - Part I - Spot check.
+        ----
+        Inputs:
+          gui (bool): True creates plots for detector optimization
+        ----
+        Returns:
+          None
+        '''
+        print('-- [ Step 3  ] Visualize spot metrics ::',gui)
+        if gui:        
+            ## Visualizes spot metrics on plot with accompanying color-coded histogram
+            self.visualize_metrics(self.df_big)
+            plot_spot_check = self.name_nosuffix + '.spot_check.png'
+            plt.savefig(plot_spot_check,dpi=300)
+            print('                --> Saved:',plot_spot_check.split('/')[-1])
+            plt.close()
         
+            ## Creating image plot with rectangle superimposed over first frame
+            plt.figure()
+            plot_name = self.name_nosuffix + '.processed.png'
+            self.display_images(self.clean_stack,self.background,self.spot_stack,frame=20)
+            plt.savefig(self.name_nosuffix + '.processed.png', dpi=100)
+            plt.close()
+            print('                --> Saved:',plot_name.split('/')[-1])
+        return
+
+    def step_4(self, gui=False):
+        '''Filters and processes data detected points'''
+
+        ## Assigning spots a True/False status based on ecc/eccentricity (circularity)
+        def ecc_filter(x,low=0,high=1):
+            '''Simple function for making a vector True/False depending on an upper and lower bound
+            ----
+            Inputs:
+              x (numeric): value to perform operation on
+              low (numeric): Lower bound
+              high (numeric): Upper bound
+            Returns:
+              (bool): True/False'''
+            if x >= low and x <= high: return True
+            else: return False
+
+        print('-- [ Step 4a ]   - Setting spot threshold')        
+        ## Auto-detecting threshold
+        if self.threshold == 'auto': self.threshold = self.find_threshold(self.df_big.signal)
+
+        print('-- [ Step 4b ]   - Filtering by signal threshold') 
         ## Assigning spots a True/False status based on signal threshold
-        self.df_big['True_particle'] = self.df_big.signal.map(lambda x: x >= self.threshold)
+        self.df_big['True_particle'] = [x >= self.threshold for x in self.df_big.signal]
+
+        t_or_f = np.unique(self.df_big.True_particle, return_counts=True)
+        if self.debug: print('                   True (%s) and False (%s) spots' % (t_or_f[0],t_or_f[1]))
+        
+        print('-- [ Step 4c ]   - Filtering by eccentricity/circularity') 
+        self.df_big.loc[self.df_big.True_particle == True,'True_particle'] = self.df_big[self.df_big.True_particle==True].ecc.map(lambda x: ecc_filter(x,low=self.ecc_low,high=self.ecc_high))
+        t_or_f = np.unique(self.df_big.True_particle, return_counts=True)
+        if self.debug: print('                   True (%s) and False (%s) spots'%(t_or_f[0],t_or_f[1]))
         
         ## Checking to confirm DataFrame is not empty after filtering
         if self.df_big[self.df_big.True_particle].shape[0] == 0:
-            print('\n\nExiting program: No spots left after filtering, check detector settings and confirm background subtraction is properly optimized')
+            print('\n\n!! No spots post-filtering, check detector and background subtraction settings for proper optimization')
             raise SystemExit
-#             self.skip_video()
+
+        ## Pruning errant points on periphery if outliers
+        print('-- [ Step 4d ]   - Trimming outliers (if indicated)')
+        if self.trim_outliers:
+            self.left_crop = self.get_trim_lines(self.df_big,edge='left',sensitivity = self.outlier_LR)
+            self.right_crop = self.get_trim_lines(self.df_big,edge='right',sensitivity = self.outlier_LR)
+            self.top_crop = self.get_trim_lines(self.df_big,edge='top',sensitivity = self.outlier_TB)
+            self.bottom_crop = self.get_trim_lines(self.df_big,edge='bottom',sensitivity = self.outlier_TB)
+            
+            self.df_big = self.df_big[(self.df_big.x >= self.left_crop) & (self.df_big.x <= self.right_crop) &
+                                        (self.df_big.y <= self.top_crop) & (self.df_big.y >= self.bottom_crop)]
 
         ## Assigning spots to vials, 0 if False AND outside of the True point range
+        print('-- [ Step 4e ]   - Assigning spots to vials')
         self.bin_lines, self.df_big.loc[self.df_big['True_particle'],'vial'] = self.bin_vials(self.df_big[self.df_big.True_particle],vials = self.vials)
         self.df_big.loc[self.df_big['True_particle']==False,'vial'] = 0
 
         ## Creating a color map based on how many vials are used
         self.vial_color_map = self.discrete_cmap()
 
+        print('-- [ Step 4f ]   - Saving raw data file')
         ## Saving the TrackPy results, plus filter and vial notations        
         self.df_big.to_csv(self.path_data, index=None)
         print('                --> Saved:',self.path_data.split('/')[-1])
+
+        return
+
+    def step_5(self, gui = False):
+        '''Visualizes spot metrics -- view_ROI
+        ----
+        Inputs:
+          gui (bool): True creates plots for detector optimization
+        ----
+        Returns:
+          None
+        '''
+        print('-- [ Step 5  ] Visualize spot metrics ::',gui)
+        if gui:        
+
+            ## Visualizes the region of interest
+            plt.figure()
+            self.view_ROI(border = True,
+                            x0 = self.x, x1 = self.x + self.w,
+                            y0 = self.y, y1 = self.y + self.h,
+                            bin_lines = True)
         
-        print('-- [ Step 2c ]   - Filtering for True spots and binning into vials/lanes')        
+            plot_roi = self.name_nosuffix + '.ROI.png'
+            plt.savefig(plot_roi,dpi=100)
+            print('                --> Saved:',plot_roi.split('/')[-1])
+            plt.close()
+        return
+        
+    def step_6(self):
+        '''Calculates local linear regressions'''
+        print('-- [ Step 6  ] Setting up DataFrames for local linear regression')
+
         ## Filtering spots and pruning unnecessary columns
         self.df_filtered = self.df_big[self.df_big.True_particle]
         self.df_filtered = self.df_filtered.drop(['ecc','signal','ep','raw_mass','mass','size','True_particle'],axis=1)
@@ -877,42 +1045,7 @@ class detector(object):
         self.specify_paths_details(self.video_file)
        
         for item in self.file_details.keys():
-            self.df_filtered[item] = np.repeat(self.file_details[item],self.df_filtered.shape[0])
-        return
-
-    def step_3(self, gui = False):
-        '''Visualizes spot metrics.
-        ----
-        Inputs:
-          gui (bool): True creates plots for detector optimization
-        ----
-        Returns:
-          None
-        '''
-        print('-- [ Step 3  ] Visualize spot metrics')
-        
-        ## Visualizes the region of interest
-        plt.figure()
-        self.view_ROI(border = True,
-                        x0 = self.x, x1 = self.x + self.w,
-                        y0 = self.y, y1 = self.y + self.h,
-                        bin_lines = True)
-        plot_roi = self.name_nosuffix + '.ROI.png'
-        plt.savefig(plot_roi,dpi=100)
-        print('                --> Saved:',plot_roi.split('/')[-1])
-        plt.close()
-        
-        ## Visualizes spot metrics on plot with accompanying color-coded histogram
-        self.visualize_metrics(self.df_big)
-        plot_spot_check = self.name_nosuffix + '.spot_check.png'
-        plt.savefig(plot_spot_check,dpi=300)
-        print('                --> Saved:',plot_spot_check.split('/')[-1])
-        plt.close()
-        return
-        
-    def step_4(self):
-        '''Calculates local linear regressions'''
-        print('-- [ Step 4  ] Calculating local linear regressions')
+            self.df_filtered[item] = np.repeat(self.file_details[item],self.df_filtered.shape[0])        
         
         ## Invert y-axis -- images indexed upper left to lower right but converting because plots got left left to upper right
         self.df_filtered['y'] = self.invert_y(self.df_filtered)
@@ -924,7 +1057,7 @@ class detector(object):
         print('                --> Saved:',self.path_filtered.split('/')[-1])
         return
         
-    def step_5(self,gui=False):
+    def step_7(self,gui=False):
         '''Creating diagnostic plots to visualize spots at beginning & end of most linear 
           section, throughout the video, and a vertical velocity plot for each vial.
         ----
@@ -934,7 +1067,9 @@ class detector(object):
         Returns:
           None
         '''
-        print('-- [ Step 5  ] Plotting data')
+        print('-- [ Step 7  ] Creating diagnostic plot file')
+        
+        print('-- [ Step 7a ] Plotting image plots with overlaying points')
 
         ## Set up plots
         plt.figure(figsize=(10,8))
@@ -942,7 +1077,7 @@ class detector(object):
 
         ## Finding the frames that flank the most linear portion 
         ##    of the y vs. t curve for all points, not just by vials
-        if self.debug: print('-- [ Step 5  ] Plotting data: Re-running local linear regression on all')
+        if self.debug: print('-- [ Step 7  ] Plotting data: Re-running local linear regression on all')
         begin = self.local_linear_regression(self.df_filtered).iloc[0].first_frame.astype(int)
         end = begin + self.window
 
@@ -950,17 +1085,19 @@ class detector(object):
         spots = self.df_big[self.df_big.True_particle]
 
         ## Creating the diagnostic plot
-        if self.debug: print("-- [ Step 5  ] Plotting data: Plot 1 - Frame %s" % begin)
+        if self.debug: print("-- [ Step 7a1] Plotting data: Plot 1 - Frame %s" % begin)
         self.image_plot(df = spots,frame = begin, ax=ax1) # ADAM...issue if only one vial
 
-        if self.debug: print("-- [ Step 5  ] Plotting data: Plot 2 - Frame %s" % end)
+        if self.debug: print("-- [ Step 7a2] Plotting data: Plot 2 - Frame %s" % end)
         self.image_plot(df = spots, ax=ax2, frame = int(str(end)))
 
-        if self.debug: print("-- [ Step 5  ] Plotting data: Plot 3 - Frame ALL")
+        if self.debug: print("-- [ Step 7a3] Plotting data: Plot 3 - Frame ALL")
         self.image_plot(df = spots,ax=ax4, frame = None)
 
-        if self.debug: print("-- [ Step 5  ] Plotting data: Plot 4 - Local linear regression plot")
-        self.create_df_by_vial()
+        print('-- [ Step 7b ] Performing local linear regression')
+        self.get_slopes()
+        
+        print('-- [ Step 7c ] Plotting local linear regression results')
         self.loclin_plot(ax=ax3)
 
         ## Saving diagnostic plot
@@ -974,10 +1111,10 @@ class detector(object):
         else:
             return
 
-    def step_6(self):
+    def step_8(self):
         '''Writing the video's slope file'''
 
-        print('-- [ Step 6  ] Setting up slopes file')
+        print('-- [ Step 8  ] Setting up slopes file')
         slope_columns = ['vial_ID','first_frame','last_frame','slope','intercept','r_value','p_value','std_err']
         
         ## Converting dictionary of local linear regressions into a DataFrame
@@ -1143,11 +1280,7 @@ class detector(object):
         if self.debug: print('detector.discrete_cmap')
         
         ## Different color schemes depending on the number of vials. This may be excessive
-        if self.vials < 10: base_cmap = 'tab10'        
-        elif self.vials <= 10: base_cmap = 'jet'
-        elif self.vials <= 20: base_cmap = 'tab20'
-        elif self.vials > 20: base_cmap = 'jet'
-        base = plt.cm.get_cmap(base_cmap)
+        base = plt.cm.get_cmap('jet')
 
         ## If there is an odd number of vials, adjust for having a too-light 'middle' color
         if self.vials%2 == 1 and self.vials > 1:
@@ -1161,59 +1294,12 @@ class detector(object):
         self.cmap_name = base.name + str(self.vials)
         color_map = LinearSegmentedColormap.from_list(self.cmap_name, self.color_list, self.vials)
         
-        return color_map
-
-## Future functionality: Add videos to a list 
-
-#     ## Handling videos with errors: Initiating error sequence
-#     def skip_video(self):
-#         '''Lets user know that a certain file could not be processed and creates/appends to 
-#         a file with other videos that could not be processed. This also doubles as a way to
-#         generate a custom list of videos in the `log_skipped_video` function'''
-#         if self.debug: print('detector.skip_video')
-#         print('\n!! Skipping video: %s\n' % self.video_file)
-#         self.log_skipped_video(self.video_file)
-# 
-#         ## Interrupts __main__ loop
-# #         global skip
-#         skip = True
-#         return
-# 
-#     ## Handling videos with errors: Writing to log file
-#     def log_skipped_video(self, file_name):
-#         '''Lets user know that a certain file could not be processed and creates/appends to 
-#         a file with other videos that could not be processed. This also doubles as a way to
-#         generate a custom list of videos.'''
-#         if self.debug: print('detector.log_skipped_video')
-#         ## Creates the header for the file if one does not exist
-#         if os.path.isfile(self.path_skipped) == None:
-#             self.path_skipped = self.path_project + 'skipped.log'
-#             print('Creating skipped.log file:',self.path_skipped)
-#             with open(self.path_skipped, 'w') as f:
-#                 print('## FreeClimber ##', file=f)
-#                 print('##')
-#                 print('## Generated from configuration file:'+self.config_file, file = f)
-#                 print('## Run on ' + str(time.ctime()), file = f)
-#                 print('##',file = f)
-#                 print('## Files skipped:',file = f)
-#             f.close()
-#     
-#         ## Appends the video_file path to the file
-#         print('Appending to skipped.log:',self.video_file)
-#         print('\n\n\n')
-#         with open(self.path_skipped,'a') as f:
-#             print(self.video_file,file = f)
-#         f.close()
-#         return
+        return color_map    
     
-    
-    
-    
-    #####    #####    #####    #####    #####    #####    #####    #####    #####
-    ## Commands used only in GUI
-    #####    #####    #####    #####    #####    #####    #####    #####    #####
+   
+    ## Parameter testing is only used in the GUI
     def parameter_testing(self, variables, axes):
-        '''Parameter testing in the GUI. Done in a separate function to account for wx application'''
+        '''Parameter testing in the GUI and done separately to account for plots with wx'''
         if self.debug: print('detector.parameter_testing')
         
         ## Running through the first few steps
@@ -1309,16 +1395,23 @@ class detector(object):
             axes[2].plot(_df.groupby('frame').frame.mean(),
                _df.groupby('frame').y.mean(),color = color, label = label)
 
+        # Deciding number of columns for legend
+        if self.vials > 10: ncol = 3
+        elif self.vials > 5: ncol = 2
+        else: ncol=1
+        
         ## Setting labels
         label_y,label_x = '(pixels)','Frames'
         if self.convert_to_cm_sec: 
             label_x,label_y = 'Seconds','(cm)'
         labels = ['Mean vertical position over time','Mean y-position %s' % label_y,label_x]
         axes[2].set(title = labels[0], ylabel=labels[1],xlabel=labels[2]) 
-        axes[2].legend(frameon=False, fontsize='x-small')   
+        axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
         ## Executing final steps
-        self.step_4()
-        self.step_5()
+        self.step_4(gui=True)
+        self.step_5(gui=True)
         self.step_6()
+        self.step_7(gui=True)
+        self.step_8()
         return

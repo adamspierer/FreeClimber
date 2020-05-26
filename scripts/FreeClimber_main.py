@@ -150,22 +150,14 @@ class FreeClimber(object):
         ## Return a sorted list of all files with the file suffix
         if undone == False:
             _list = sorted(unique(_list1))
-            print('')
-            print(_list)
-            print('')
-
             return _list
 
         ## Return a sorted list of all undone files            
         if undone:
             _list1,_list2 = set(_list1),set(_list2)
             _list = list(_list1.difference(_list2))
-#             _list = [item+'.'+endswith for item in 	_list]
             _list = sorted(	_list)
-            print('')
-            print(_list)
-            print('')
-            if ~len(_list):
+            if len(_list) == 0:
                 print('All files previously processed, re-evaluate your inputs if this message is a surprise.')
             return 	_list
 
@@ -205,9 +197,11 @@ class FreeClimber(object):
             d.step_2() # DataFrame creation and manipulation (df_big and df_filtered)
 
             d.step_3(gui = self.args.optimization_plots) # Creating spot check plots for gui
-            d.step_4() # Local linear regression calculation
-            d.step_5() # Plot generation
-            d.step_6() # Assemble slopes into a file
+            d.step_4(gui=self.args.optimization_plots)
+            d.step_5(gui = self.args.optimization_plots) # Creating spot check plots for gui
+            d.step_6() # Local linear regression calculation
+            d.step_7() # Plot generation
+            d.step_8() # Assemble slopes into a file
 #             if self.project_path == None: self.project_path = d.project_path
             self.first_run = False
         return
@@ -240,8 +234,8 @@ class FreeClimber(object):
             os.mkdir(self.path_project + '/log/')
         except:
             pass
-        self.path_completed = self.path_project + '/log/completed.log'
-        self.path_skipped = self.path_project + '/log/skipped.log'
+        self.path_completed = self.path_project + 'log/completed.log'
+        self.path_skipped = self.path_project + 'log/skipped.log'
         path_list,text_list = [self.path_completed,self.path_skipped],['completed','skipped']
         time_stamp = str(ctime())
     
@@ -435,8 +429,9 @@ def main():
     fc.create_log_header()
 
     for File in fc.file_list:
-        print(File)
+#         print(File)
         try:
+#         if 1==1:
             t0 = time()
             fc.count += 1
             fc.name = os.path.split(File)[-1]
@@ -444,6 +439,7 @@ def main():
             fc.timer(t0)
             fc.log_video(completed=True, file_name = File)
         except:
+#         else:
             fc.log_video(completed=False, file_name = File)    
             
     ## Concatenate slopes of all .slopes.csv files into a single, results.csv file
