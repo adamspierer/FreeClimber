@@ -430,18 +430,28 @@ def main():
 
     for File in fc.file_list:
 #         print(File)
-        try:
-#         if 1==1:
-            t0 = time()
-            fc.count += 1
-            fc.name = os.path.split(File)[-1]
-            fc.process(video_file = File,variables = None, config_file = fc.config_file)
-            fc.timer(t0)
-            fc.log_video(completed=True, file_name = File)
-        except:
-#         else:
-            fc.log_video(completed=False, file_name = File)    
+        if args.debug:
+            if 1==1:
+                t0 = time()
+                fc.count += 1
+                fc.name = os.path.split(File)[-1]
+                fc.process(video_file = File,variables = None, config_file = fc.config_file)
+                fc.timer(t0)
+                fc.log_video(completed=True, file_name = File)
+            else:
+                fc.log_video(completed=False, file_name = File)    
             
+        else:
+            try:
+                t0 = time()
+                fc.count += 1
+                fc.name = os.path.split(File)[-1]
+                fc.process(video_file = File,variables = None, config_file = fc.config_file)
+                fc.timer(t0)
+                fc.log_video(completed=True, file_name = File)
+            except:
+                fc.log_video(completed=False, file_name = File)    
+
     ## Concatenate slopes of all .slopes.csv files into a single, results.csv file
     if args.no_concat == False:
         fc.concat_slopes()
