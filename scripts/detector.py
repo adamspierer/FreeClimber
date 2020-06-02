@@ -62,6 +62,9 @@ class detector(object):
             self.load_for_main(config_file = config_file)
         self.check_variable_formats()
 
+        ## Creating a color map based on how many vials are used
+        self.vial_color_map = self.discrete_cmap()
+        
         ## Create a conversion factor
         if self.convert_to_cm_sec: self.conversion_factor = self.pixel_to_cm / self.frame_rate
         else: self.conversion_factor = 1
@@ -176,7 +179,6 @@ class detector(object):
 
         ## Project folder specific paths
         if self.path_project == None: self.path_project = os.path.join(folder,self.name + '.cfg')
-#         self.path_skipped = self.path_project
 
         ## Extracting file details and naming individual vials
         self.file_details = dict(zip(self.naming_convention.split('_'),self.name.split('_')))
@@ -898,15 +900,8 @@ class detector(object):
         return
 
 
-    def step_2(self, gui = False):
-        '''Performs spot detection and manipulates the resulting DataFrames.
-        ----
-        Inputs:
-          gui (bool): True creates plots for detector optimization
-        ----
-        Returns:
-          None
-        '''
+    def step_2(self):
+        '''Performs spot detection and manipulates the resulting DataFrames'''
         print('-- [ Step 2  ] Identifying spots')
 
         ## Particle detection step
@@ -931,20 +926,20 @@ class detector(object):
             ## Visualizes spot metrics on plot with accompanying color-coded histogram
             self.visualize_metrics(self.df_big)
             plot_spot_check = self.name_nosuffix + '.spot_check.png'
-            plt.savefig(plot_spot_check,dpi=300)
+            plt.savefig(plot_spot_check,dpi=200)
             print('                --> Saved:',plot_spot_check.split('/')[-1])
             plt.close()
         
             ## Creating image plot with rectangle superimposed over first frame
             plt.figure()
-            plot_name = self.name_nosuffix + '.processed.png'
             self.display_images(self.clean_stack,self.background,self.spot_stack,frame=20)
-            plt.savefig(self.name_nosuffix + '.processed.png', dpi=100)
+            plot_name = self.name_nosuffix + '.processed.png'
+            plt.savefig(plot_name, dpi=100)
             plt.close()
             print('                --> Saved:',plot_name.split('/')[-1])
         return
 
-    def step_4(self, gui=False):
+    def step_4(self):#, gui=False):
         '''Filters and processes data detected points'''
 
         ## Assigning spots a True/False status based on ecc/eccentricity (circularity)
@@ -995,10 +990,8 @@ class detector(object):
         ## Assigning spots to vials, 0 if False AND outside of the True point range
         print('-- [ Step 4e ]   - Assigning spots to vials')
         self.bin_lines, self.df_big.loc[self.df_big['True_particle'],'vial'] = self.bin_vials(self.df_big[self.df_big.True_particle],vials = self.vials)
+        self.df_big['vial'] = self.df_big['vial'].astype(int)
         self.df_big.loc[self.df_big['True_particle']==False,'vial'] = 0
-
-        ## Creating a color map based on how many vials are used
-        self.vial_color_map = self.discrete_cmap()
 
         print('-- [ Step 4f ]   - Saving raw data file')
         ## Saving the TrackPy results, plus filter and vial notations        
@@ -1017,19 +1010,19 @@ class detector(object):
           None
         '''
         print('-- [ Step 5  ] Visualize spot metrics ::',gui)
-        if gui:        
-
-            ## Visualizes the region of interest
-            plt.figure()
-            self.view_ROI(border = True,
-                            x0 = self.x, x1 = self.x + self.w,
-                            y0 = self.y, y1 = self.y + self.h,
-                            bin_lines = True)
-        
-            plot_roi = self.name_nosuffix + '.ROI.png'
-            plt.savefig(plot_roi,dpi=100)
-            print('                --> Saved:',plot_roi.split('/')[-1])
-            plt.close()
+#         if gui:        
+# 
+#             ## Visualizes the region of interest
+#             plt.figure()
+#             self.view_ROI(border = True,
+#                             x0 = self.x, x1 = self.x + self.w,
+#                             y0 = self.y, y1 = self.y + self.h,
+#                             bin_lines = True)
+#         
+#             plot_roi = self.name_nosuffix + '.ROI.png'
+#             plt.savefig(plot_roi,dpi=100)
+#             print('                --> Saved:',plot_roi.split('/')[-1])
+#             plt.close()
         return
         
     def step_6(self):
@@ -1067,6 +1060,22 @@ class detector(object):
         Returns:
           None
         '''
+        
+        print('-- [ Step 5  ] Visualize spot metrics ::',gui)
+        if gui:        
+
+            ## Visualizes the region of interest
+            plt.figure()
+            self.view_ROI(border = True,
+                            x0 = self.x, x1 = self.x + self.w,
+                            y0 = self.y, y1 = self.y + self.h,
+                            bin_lines = True)
+        
+            plot_roi = self.name_nosuffix + '.ROI.png'
+            plt.savefig(plot_roi,dpi=100)
+            print('                --> Saved:',plot_roi.split('/')[-1])
+            plt.close()
+            
         print('-- [ Step 7  ] Creating diagnostic plot file')
         
         print('-- [ Step 7a ] Plotting image plots with overlaying points')
@@ -1106,11 +1115,10 @@ class detector(object):
         plt.close()
         print('                --> Saved:',self.path_diagnostic.split('/')[-1])
         
-        if gui:
-            return ax
-        else:
-            return
-
+#         if gui: return ax
+#         else: return
+        return
+        
     def step_8(self):
         '''Writing the video's slope file'''
 
@@ -1185,17 +1193,18 @@ class detector(object):
         
         ## Coloring spots by vial
         df = df.sort_values(by='vial')
-        if self.vials > 1: # If 2+ vials
+#         if self.vials > 1: # If 2+ vials
+        if self.vials >= 1: # If 2+ vials
             ax.scatter(df.x, df.y, 
                         s = 30, 
                         alpha = alpha,
                         c = df['vial'], 
                         cmap=self.vial_color_map)
-        else: # If 1 vial
-            ax.scatter(df.x, df.y,
-                        s = 30,
-                        alpha = alpha,
-                        color = self.color_list[0])
+#         else: # If 1 vial
+#             ax.scatter(df.x, df.y,
+#                         s = 30,
+#                         alpha = alpha,
+#                         color = self.color_list[0])
        
         ## Getting rid of axis labels
         ax.xaxis.set_visible(False)
@@ -1214,7 +1223,7 @@ class detector(object):
         '''
         if self.debug: print('detector.loclin_plot')
         
-        def two_plot(df,color,label,first,last, ax=None):
+        def two_plot(df,color,label,first,last,ax=None):
             '''Adds the bolded flair to the local linear regression plot'''
             if self.debug: print('detector.two_plot')
             
@@ -1239,25 +1248,33 @@ class detector(object):
                 y = y / self.pixel_to_cm
             ax.plot(x,y,color = color,label = label)
             return
-        
+    
         ## Plotting multiple vials' data
+        self.discrete_cmap()
+        self.color_list = np.repeat('r',self.vials)
         if len(self.result) > 1:
             for V in range(1,self.vials+1):
                 l = 'Vial '+str(V)
                 c = self.color_list[V-1]
                 _details = self.result[V]
                 frames = _details[1],_details[2]
-                two_plot(self.vial[V],color = c,label = l,
-                         first = _details[1],last = _details[2],ax=ax)
-        ## Plotting only 1 vial's data
-        else:
-            for V in range(1,self.vials+1):
-                l = 'Vial 1'
-                c = self.color_list[V-1]
-                _details = self.result[V]
-                frames = _details[1],_details[2]
-                two_plot(self.vial[V],color = c,label = l,
-                         first = _details[1],last = _details[2],ax=ax)
+                two_plot(self.vial[V],
+                         color = 'k',
+                         label = l,
+                         first = _details[1],
+                         last  = _details[2],
+                         ax=ax) # color = c,
+
+#         ## Plotting only 1 vial's data
+#         else:
+# #             for V in range(1,self.vials+1):
+#             l = 'Vial 1'
+# #             c = self.color_list[V-1]
+#             c = self.color_list[0]
+#             _details = self.result[0]
+#             frames = _details[1],_details[2]
+#             two_plot(self.vial[0],color = c,label = l,
+#                      first = _details[1],last = _details[2],ax=ax)
 
         ## Add on labels and legends
         ax.legend(loc=2, frameon=False, fontsize='x-small')
@@ -1281,21 +1298,43 @@ class detector(object):
         
         ## Different color schemes depending on the number of vials. This may be excessive
         base = plt.cm.get_cmap('jet')
-
-        ## If there is an odd number of vials, adjust for having a too-light 'middle' color
-        if self.vials%2 == 1 and self.vials > 1:
-            self.color_list = base(np.linspace(0, 1, self.vials+1))
-            row_to_drop = len(self.color_list)//2
-            self.color_list = np.delete(self.color_list, row_to_drop,axis = 0)
-        else:
-            self.color_list = base(np.linspace(0, 1, self.vials))
-
+        self.color_list = base(np.linspace(0, 1, self.vials))                    
+        print('self.color_list',self.color_list)
+        
         ## Assigning colormap
         self.cmap_name = base.name + str(self.vials)
         color_map = LinearSegmentedColormap.from_list(self.cmap_name, self.color_list, self.vials)
         
-        return color_map    
-    
+        return color_map  
+        
+#     def discrete_cmap(self):
+#         ## Modified from: https://gist.github.com/jakevdp/91077b0cae40f8f8244a
+#         '''Creates a list of colors from a color map, given a specified number of vials
+#         ----
+#         Returns:
+#           color_map (list of lists): Each list contains the color for a different vial '''
+#         if self.debug: print('detector.discrete_cmap')
+#         
+#         ## Different color schemes depending on the number of vials. This may be excessive
+#         if self.vials < 10: base_cmap = 'tab10'        
+#         elif self.vials <= 10: base_cmap = 'jet'
+#         elif self.vials <= 20: base_cmap = 'tab20'
+#         elif self.vials > 20: base_cmap = 'jet'
+#         base = plt.cm.get_cmap(base_cmap)
+# 
+#         ## If there is an odd number of vials, adjust for having a too-light 'middle' color
+#         if self.vials%2 == 1 and self.vials > 1:
+#             self.color_list = base(np.linspace(0, 1, self.vials+1))
+#             row_to_drop = len(self.color_list)//2
+#             self.color_list = np.delete(self.color_list, row_to_drop,axis = 0)
+#         else:
+#             self.color_list = base(np.linspace(0, 1, self.vials))
+# 
+#         ## Assigning colormap
+#         self.cmap_name = base.name + str(self.vials)
+#         color_map = LinearSegmentedColormap.from_list(self.cmap_name, self.color_list, self.vials)
+#         
+#         return color_map
    
     ## Parameter testing is only used in the GUI
     def parameter_testing(self, variables, axes):
@@ -1304,24 +1343,40 @@ class detector(object):
         
         ## Running through the first few steps
         self.load_for_gui(variables)
-        self.step_1(gui=True) # Crop and convert video
-        self.step_2(gui=True) # Detect spots and format DataFrame
-        self.step_3() # Visualize other spots
         
-        ## Slice df_big into true vs. false spots
-        if self.debug: print('detector.parameter_testing: Slicing DataFrames')
-        spots_false = self.df_big[~self.df_big['True_particle']]
-        spots_true = self.df_big[self.df_big['True_particle']]
-        spots_true.loc[:,'color'] = spots_true.vial.map(dict(zip(range(1,self.vials+1),self.color_list)))
-        bins=20
+        ## Load in video
+        self.step_1(gui=True) # Crop and convert video
 
-        ## Setting plot for background image
+        ## Detect spots
+        self.step_2()
+        
+        ## First optimization plot
+        self.step_3(gui=True)
+        
+        ## Filters DataFrame of detected spots
+        self.step_4() 
+
+        ## Setting plot (upper left) for background image
         if self.debug: print('detector.parameter_testing: Subplot 0: Background image')
         axes[0].set_title("Background Image")
         axes[0].imshow(self.background,cmap=cm.Greys_r)
         axes[0].set_xlim(0,self.w)
         axes[0].set_ylim(self.h,0)
         axes[0].scatter([0,self.w],[0,self.h],alpha=0,marker='.')
+
+        
+        ## Slice df_big into true vs. false spots
+        if self.debug: print('detector.parameter_testing: Slicing DataFrames')
+        spots_false = self.df_big[~self.df_big['True_particle']]
+        spots_true = self.df_big[self.df_big['True_particle']]
+        
+        ## Binning and coloring spots
+        self.discrete_cmap()
+        bin_lines,spots_true['vial'] = self.bin_vials(spots_true,vials = self.vials)
+
+        spots_true.loc[:,'color'] = spots_true.vial.map(dict(zip(range(1,self.vials+1), self.color_list)))
+        bins=40
+
 
         ## Setting plots for scatterplot overlay on a selected frame
         if self.debug: print('detector.parameter_testing: Subplot 1: Test frame')
@@ -1332,7 +1387,8 @@ class detector(object):
                         color='y',marker = 'x', alpha = .8)
         a = axes[1].scatter(spots_true[spots_true.frame==self.frame_0].x,
                             spots_true[spots_true.frame==self.frame_0].y, 
-                            color = spots_true[spots_true.frame==self.frame_0].color,
+                            c = spots_true[spots_true.frame==self.frame_0].vial,
+                            cmap = self.vial_color_map,
                             marker ='o',alpha = .8)
         a.set_facecolor('none')
         axes[1].vlines(self.bin_lines,0,self.df_big.y.max(),color='w')
@@ -1364,10 +1420,11 @@ class detector(object):
         y_max = np.histogram(self.df_big.signal,bins=bins)[0].max()
         axes[4].vlines(self.threshold,0,y_max)
 
+        self.step_6()
         ## Setting plots for local linear regression
         df = self.df_filtered.sort_values(by='frame')
-        df['y'] = self.invert_y(df) # Reindexing points along y-axis
-        
+
+        self.discrete_cmap()
         ## LocLin plot for each vial
         for V in range(1,self.vials + 1):
             label = 'Vial '+str(V)
@@ -1409,7 +1466,6 @@ class detector(object):
         axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
         ## Executing final steps
-        self.step_4(gui=True)
         self.step_5(gui=True)
         self.step_6()
         self.step_7(gui=True)

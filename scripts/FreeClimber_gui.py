@@ -380,6 +380,7 @@ class main_gui(wx.Frame):
         ## Busy cursor while the main function runs
         wx.BeginBusyCursor()
         try:
+            variables = variables + ['debug='+str(args.debug)]
             self.detector.parameter_testing(variables, self.axes)
         finally:
             wx.EndBusyCursor()

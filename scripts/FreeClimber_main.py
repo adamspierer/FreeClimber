@@ -5,10 +5,7 @@
 ## Created by: Adam N. Spierer
 ## Date      : May 2020
 ## Purpose   : Command line interface wrapper for FreeClimber
-## 
-## Upcoming features:
-## [ ] Log files for all outputs
-## [ ] Log files for videos skipped
+
 
 ## Version number
 version='0.3.2'
@@ -197,12 +194,11 @@ class FreeClimber(object):
             d.step_2() # DataFrame creation and manipulation (df_big and df_filtered)
 
             d.step_3(gui = self.args.optimization_plots) # Creating spot check plots for gui
-            d.step_4(gui=self.args.optimization_plots)
+            d.step_4(gui = self.args.optimization_plots)
             d.step_5(gui = self.args.optimization_plots) # Creating spot check plots for gui
             d.step_6() # Local linear regression calculation
             d.step_7() # Plot generation
             d.step_8() # Assemble slopes into a file
-#             if self.project_path == None: self.project_path = d.project_path
             self.first_run = False
         return
 
@@ -221,7 +217,7 @@ class FreeClimber(object):
         self.slopes = concat([read_csv(item) for item in to_concat])
         
         ## Saves results.csv file to the path_project folder (specified in the configuration file)
-        self.path_result = self.path_project+'/results.csv'
+        self.path_result = self.path_project+'results.csv'
         print("    - Saving:", self.path_result)
         self.slopes.to_csv(self.path_result,index=False)
         return
@@ -429,8 +425,8 @@ def main():
     fc.create_log_header()
 
     for File in fc.file_list:
-#         print(File)
         if args.debug:
+            print(File)
             if 1==1:
                 t0 = time()
                 fc.count += 1
@@ -468,13 +464,16 @@ if __name__ == '__main__':
 ## Additional functionality to add in for later releases
     
 ## Insert 1
-#     fc.check_variables() # Not ready for this release
+    fc.check_variables() # Not ready for this release
 #
-#     def check_variables(self):
-#         ## Making sure diameter is an odd number
-#         if int(self.diameter) % 2 == False:
-#             self.diameter = int(self.diameter) + 1
-#             
-#         ## Should probably check other variables at some point...
-#         
-#         return
+    def check_variables(self):
+        
+
+
+        ## Making sure diameter is an odd number
+        if int(self.diameter) % 2 == False:
+            self.diameter = int(self.diameter) + 1
+            
+        ## Should probably check other variables at some point...
+        
+        return
