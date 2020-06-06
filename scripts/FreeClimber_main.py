@@ -190,15 +190,15 @@ class FreeClimber(object):
         else:
             self.print_new_video(video_file)
             d = detector.detector(video_file = video_file, config_file = config_file, debug = self.args.debug)
-            d.step_1(gui = self.args.optimization_plots) # Video manipulation (load, crop, convert to grayscale, subtract background)
+            d.step_1(gui = self.args.optimization_plots) # Crops and formats the video
             d.step_2() # DataFrame creation and manipulation (df_big and df_filtered)
 
-            d.step_3(gui = self.args.optimization_plots) # Creating spot check plots for gui
-            d.step_4(gui = self.args.optimization_plots)
-            d.step_5(gui = self.args.optimization_plots) # Creating spot check plots for gui
-            d.step_6() # Local linear regression calculation
-            d.step_7() # Plot generation
-            d.step_8() # Assemble slopes into a file
+            d.step_3(gui = self.args.optimization_plots) # Visualizes spot metrics
+            d.step_4()# Filters and processes data detected points
+
+            d.step_5() # Calculates local linear regressions
+            d.step_6(gui = self.args.optimization_plots) # Creating diagnostic/other plots 
+            d.step_7() # Writing the video's slope file
             self.first_run = False
         return
 
