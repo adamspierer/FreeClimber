@@ -230,8 +230,8 @@ class FreeClimber(object):
             os.mkdir(self.path_project + '/log/')
         except:
             pass
-        self.path_completed = self.path_project + 'log/completed.log'
-        self.path_skipped = self.path_project + 'log/skipped.log'
+        self.path_completed = self.path_project + '/log/completed.log'
+        self.path_skipped = self.path_project + '/log/skipped.log'
         path_list,text_list = [self.path_completed,self.path_skipped],['completed','skipped']
         time_stamp = str(ctime())
     

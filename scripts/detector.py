@@ -63,7 +63,8 @@ class detector(object):
         self.check_variable_formats()
 
         ## Creating a color map based on how many vials are used
-        self.vial_color_map = self.discrete_cmap()
+#         self.vial_color_map = self.discrete_cmap()
+        self.vial_color_map = cm.jet ## ADAM
         
         ## Create a conversion factor
         if self.convert_to_cm_sec: self.conversion_factor = self.pixel_to_cm / self.frame_rate
@@ -72,6 +73,7 @@ class detector(object):
         print('')
         self.specify_paths_details(video_file)
         self.image_stack = self.video_to_array(video_file,loglevel='panic')
+        self.cmap = cm.jet
         return
 
     ## Loading functions    
@@ -185,6 +187,8 @@ class detector(object):
         self.experiment_details = self.name.split('_')
         self.experiment_details[-1] = '.'.join(self.experiment_details[-1].split('.')[:-1])
         self.vial_ID = self.experiment_details[:self.vial_id_vars]
+        
+        self.color_list = [cm.jet(i) for i in np.linspace(0,1,self.vials)]
         return
 
     ## Checking to make sure variables are entered properly...still more to include
@@ -368,8 +372,7 @@ class detector(object):
             plt.vlines(x0+lc,y0+bc,y0+tc,color = 'c',alpha = .7, linewidth=.5)
             plt.vlines(x0+rc,y0+bc,y0+tc,color = 'c',alpha = .7, linewidth=.5)
             plt.hlines(y0+bc,x0+lc,x0+rc,color = 'c',alpha = .7, linewidth=.5)
-            plt.hlines(y0+tc,x0+lc,x0+rc,color = 'c',alpha = .7, linewidth=.5, 
-                        label='Outlier trim')
+            plt.hlines(y0+tc,x0+lc,x0+rc,color = 'c',alpha = .7, linewidth=.5, label='Outlier trim')
 
         ## Draws lines between vials
         if self.debug: print('detector.view_ROI :: Drawing vial/bin lines')
@@ -990,7 +993,7 @@ class detector(object):
         ## Assigning spots to vials, 0 if False AND outside of the True point range
         print('-- [ Step 4e ]   - Assigning spots to vials')
         self.bin_lines, self.df_big.loc[self.df_big['True_particle'],'vial'] = self.bin_vials(self.df_big[self.df_big.True_particle],vials = self.vials)
-        self.df_big['vial'] = self.df_big['vial'].astype(int)
+#         self.df_big['vial'] = self.df_big['vial'].astype(int)
         self.df_big.loc[self.df_big['True_particle']==False,'vial'] = 0
 
         print('-- [ Step 4f ]   - Saving raw data file')
@@ -1194,7 +1197,7 @@ class detector(object):
         ## Coloring spots by vial
         df = df.sort_values(by='vial')
 #         if self.vials > 1: # If 2+ vials
-        if self.vials >= 1: # If 2+ vials
+        if self.vials >= 1:
             ax.scatter(df.x, df.y, 
                         s = 30, 
                         alpha = alpha,
@@ -1223,7 +1226,7 @@ class detector(object):
         '''
         if self.debug: print('detector.loclin_plot')
         
-        def two_plot(df,color,label,first,last,ax=None):
+        def two_plot(df,vial,label,first,last,ax=None):
             '''Adds the bolded flair to the local linear regression plot'''
             if self.debug: print('detector.two_plot')
             
@@ -1235,7 +1238,10 @@ class detector(object):
             if self.convert_to_cm_sec:
                 x = x / self.frame_rate
                 y = y / self.pixel_to_cm
-            ax.plot(x,y, alpha = .35, color = color,label='') 
+            ax.plot(x,y, 
+                    alpha = .35, 
+                    color = self.color_list[vial-1],
+                    label='') 
 
             ## Only points in the most linear segment
             df = df[(df.frame >= first) & (df.frame <= last)]
@@ -1246,12 +1252,14 @@ class detector(object):
             if self.convert_to_cm_sec:
                 x = x / self.frame_rate
                 y = y / self.pixel_to_cm
-            ax.plot(x,y,color = color,label = label)
+            ax.plot(x,y,
+                    color = self.color_list[vial-1],
+                    label = label)
             return
     
         ## Plotting multiple vials' data
-        self.discrete_cmap()
-        self.color_list = np.repeat('r',self.vials)
+#         self.discrete_cmap()
+#         self.color_list = np.repeat('r',self.vials)
         if len(self.result) > 1:
             for V in range(1,self.vials+1):
                 l = 'Vial '+str(V)
@@ -1259,12 +1267,12 @@ class detector(object):
                 _details = self.result[V]
                 frames = _details[1],_details[2]
                 two_plot(self.vial[V],
-                         color = 'k',
+                         vial = V,
                          label = l,
                          first = _details[1],
                          last  = _details[2],
-                         ax=ax) # color = c,
-
+                         ax=ax)
+#                          color = 'k',
 #         ## Plotting only 1 vial's data
 #         else:
 # #             for V in range(1,self.vials+1):
@@ -1286,56 +1294,10 @@ class detector(object):
         label_y = 'Mean y-position (%s)' % label_y
         ax.set_ylim(0,ax.get_ylim()[1])
         ax.set(title=title,xlabel = label_x,ylabel=label_y)
-        return
+        
+        if ax == None: return
+        else: return ax
 
-    def discrete_cmap(self):
-        ## Modified from: https://gist.github.com/jakevdp/91077b0cae40f8f8244a
-        '''Creates a list of colors from a color map, given a specified number of vials
-        ----
-        Returns:
-          color_map (list of lists): Each list contains the color for a different vial '''
-        if self.debug: print('detector.discrete_cmap')
-        
-        ## Different color schemes depending on the number of vials. This may be excessive
-        base = plt.cm.get_cmap('jet')
-        self.color_list = base(np.linspace(0, 1, self.vials))                    
-        print('self.color_list',self.color_list)
-        
-        ## Assigning colormap
-        self.cmap_name = base.name + str(self.vials)
-        color_map = LinearSegmentedColormap.from_list(self.cmap_name, self.color_list, self.vials)
-        
-        return color_map  
-        
-#     def discrete_cmap(self):
-#         ## Modified from: https://gist.github.com/jakevdp/91077b0cae40f8f8244a
-#         '''Creates a list of colors from a color map, given a specified number of vials
-#         ----
-#         Returns:
-#           color_map (list of lists): Each list contains the color for a different vial '''
-#         if self.debug: print('detector.discrete_cmap')
-#         
-#         ## Different color schemes depending on the number of vials. This may be excessive
-#         if self.vials < 10: base_cmap = 'tab10'        
-#         elif self.vials <= 10: base_cmap = 'jet'
-#         elif self.vials <= 20: base_cmap = 'tab20'
-#         elif self.vials > 20: base_cmap = 'jet'
-#         base = plt.cm.get_cmap(base_cmap)
-# 
-#         ## If there is an odd number of vials, adjust for having a too-light 'middle' color
-#         if self.vials%2 == 1 and self.vials > 1:
-#             self.color_list = base(np.linspace(0, 1, self.vials+1))
-#             row_to_drop = len(self.color_list)//2
-#             self.color_list = np.delete(self.color_list, row_to_drop,axis = 0)
-#         else:
-#             self.color_list = base(np.linspace(0, 1, self.vials))
-# 
-#         ## Assigning colormap
-#         self.cmap_name = base.name + str(self.vials)
-#         color_map = LinearSegmentedColormap.from_list(self.cmap_name, self.color_list, self.vials)
-#         
-#         return color_map
-   
     ## Parameter testing is only used in the GUI
     def parameter_testing(self, variables, axes):
         '''Parameter testing in the GUI and done separately to account for plots with wx'''
@@ -1356,6 +1318,8 @@ class detector(object):
         ## Filters DataFrame of detected spots
         self.step_4() 
 
+        self.step_5(gui=True)
+        
         ## Setting plot (upper left) for background image
         if self.debug: print('detector.parameter_testing: Subplot 0: Background image')
         axes[0].set_title("Background Image")
@@ -1371,7 +1335,7 @@ class detector(object):
         spots_true = self.df_big[self.df_big['True_particle']]
         
         ## Binning and coloring spots
-        self.discrete_cmap()
+#         self.discrete_cmap()
         bin_lines,spots_true['vial'] = self.bin_vials(spots_true,vials = self.vials)
 
         spots_true.loc[:,'color'] = spots_true.vial.map(dict(zip(range(1,self.vials+1), self.color_list)))
@@ -1421,10 +1385,10 @@ class detector(object):
         axes[4].vlines(self.threshold,0,y_max)
 
         self.step_6()
+        
         ## Setting plots for local linear regression
         df = self.df_filtered.sort_values(by='frame')
 
-        self.discrete_cmap()
         ## LocLin plot for each vial
         for V in range(1,self.vials + 1):
             label = 'Vial '+str(V)
@@ -1450,7 +1414,7 @@ class detector(object):
             ## Plotting most linear points
             _df = _df[(_df.frame >= begin) & (_df.frame <= end)]
             axes[2].plot(_df.groupby('frame').frame.mean(),
-               _df.groupby('frame').y.mean(),color = color, label = label)
+           _df.groupby('frame').y.mean(),color = color, label = label)
 
         # Deciding number of columns for legend
         if self.vials > 10: ncol = 3
@@ -1466,8 +1430,9 @@ class detector(object):
         axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
         ## Executing final steps
-        self.step_5(gui=True)
-        self.step_6()
+
+#         self.step_6()
         self.step_7(gui=True)
+#         axes[2] = self.loclin_plot()
         self.step_8()
         return
