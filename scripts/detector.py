@@ -1252,14 +1252,14 @@ class detector(object):
 
         ## Setting plots for scatterplot overlay on a selected frame
         if self.debug: print('detector.parameter_testing: Subplot 1: Test frame')
-        axes[1].set_title('Frame: '+str(self.frame_0))
-        axes[1].imshow(self.clean_stack[self.frame_0], cmap = cm.Greys_r)
-        axes[1].scatter(spots_false[(spots_false.frame==self.frame_0)].x,
-                        spots_false[(spots_false.frame==self.frame_0)].y, 
-                        color='y',marker = 'x', alpha = .8)
-        a = axes[1].scatter(spots_true[spots_true.frame==self.frame_0].x,
-                            spots_true[spots_true.frame==self.frame_0].y, 
-                            c = spots_true[spots_true.frame==self.frame_0].vial,
+        axes[1].set_title('Frame: '+str(self.check_frame))
+        axes[1].imshow(self.clean_stack[self.check_frame], cmap = cm.Greys_r)
+        axes[1].scatter(spots_false[(spots_false.frame==self.check_frame)].x,
+                        spots_false[(spots_false.frame==self.check_frame)].y, 
+                        color = 'b',marker ='+',alpha = .5)
+        a = axes[1].scatter(spots_true[spots_true.frame==self.check_frame].x,
+                            spots_true[spots_true.frame==self.check_frame].y, 
+                            c = spots_true[spots_true.frame==self.check_frame].vial,
                             cmap = self.vial_color_map,
                             marker ='o',alpha = .8)
         a.set_facecolor('none')
@@ -1297,32 +1297,31 @@ class detector(object):
         ## Setting plots for local linear regression
         df = self.df_filtered.sort_values(by='frame')
 
+        ## Converting to cm per sec if specified
+        convert_x,convert_y = 1,1
+        if self.convert_to_cm_sec:
+            convert_x,convert_y = self.frame_rate,self.pixel_to_cm
+
         ## LocLin plot for each vial
         for V in range(1,self.vials + 1):
             label = 'Vial '+str(V)
             color = self.color_list[V-1]
             _df = df[df.vial == V]
 
-            ## Converting to cm per sec if specified
-            convert_x,convert_y = 1,1
-            if self.convert_to_cm_sec:
-                convert_x,convert_y = self.frame_rate,self.pixel_to_cm
-            _df.loc[:,'y'] = _df['y'] / convert_y                
-            _df.loc[:,'frame'] = _df['frame'] / convert_x
-
             ## Local linear regression
             begin = self.local_linear_regression(_df).iloc[0].first_frame.astype(int)
             end = begin + self.window        
-            frames = begin,end
-            
+#             frames = begin,end
+                        
             ## Plotting all points
-            axes[2].plot(_df.groupby('frame').frame.mean(),
-               _df.groupby('frame').y.mean(),alpha = .35, color = color,label='') 
+            axes[2].plot(_df.groupby('frame').frame.mean() / convert_x,
+               _df.groupby('frame').y.mean() / convert_y,alpha = .35, color = color,label='') 
             
             ## Plotting most linear points
             _df = _df[(_df.frame >= begin) & (_df.frame <= end)]
-            axes[2].plot(_df.groupby('frame').frame.mean(),
-           _df.groupby('frame').y.mean(),color = color, label = label)
+            axes[2].plot(_df.groupby('frame').frame.mean() / convert_x,
+           _df.groupby('frame').y.mean() / convert_y,color = color, label = label)
+
 
         # Deciding number of columns for legend
         if self.vials > 10: ncol = 3
