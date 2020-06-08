@@ -60,7 +60,7 @@ We recommend running this package in an Anaconda-based virtual environment. Anac
 
 For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
 
-**Installation using PyPi** <!--- (Recommended)**: --->
+**Installation using PyPi**
 
 	pip install FreeClimber
 
