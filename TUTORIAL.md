@@ -223,7 +223,7 @@ To facilitate researchers' ability to optimize `FreeClimber`, the GUI will also 
     
 2. `processed.png` - Designed to help with a frame range for the `Background frames`. Three plots demonstrate what the video looks like cropped and grayscaled, as a null background, and with the background subtracted. The frame number corresponds with the "Check frame"/`check_frame` field/variable.
     
-<img src="https://github.com/adamspierer/FreeClimber/blob/master/example/w1118_m_2_1.processed.png" width="500" height="289">
+<img src="https://github.com/adamspierer/FreeClimber/blob/master/example/w1118_m_2_1.processed.png" width="522" height="300">
 
 3. `spot_check.png` - Three sets of two subplots, corresponding with the distribution of certain spot metrics and where the spots lie on the image. This is especially useful for determining eccentricity, mass, and signal thresholds.
     
