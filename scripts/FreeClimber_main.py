@@ -236,14 +236,14 @@ class FreeClimber(object):
         time_stamp = str(ctime())
     
         for path,text in zip(path_list,text_list):
-            print('Creating',text,'.log file:',path)
+            print('Creating',text,'.log file: ',path)
             with open(path, 'w') as f:
                 print('## FreeClimber ##', file=f)
                 print('##',file=f)
-                print('## Generated from configuration file:'+self.config_file, file = f)
+                print('## Generated from configuration file: '+self.config_file, file = f)
                 print('## Run on ' + time_stamp, file = f)
                 print('##',file = f)
-                print('## Files',text,':',file = f)
+                print('## Files %s:' % text,file = f)
             f.close()
         return
 
@@ -264,7 +264,7 @@ class FreeClimber(object):
 
         ## Appends the video_file path to the file
         if ~completed:
-            print('Appending to',path + ':',file_name)
+            print('Appending to',path + ': ',file_name)
         with open(self.path_project + '/' + path,'a') as f:
             print(file_name,file = f)
         f.close()
