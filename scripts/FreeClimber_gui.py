@@ -84,7 +84,7 @@ class main_gui(wx.Frame):
         self.update_names()
         self.input_names = ['x','y',
                             'w','h',
-                            'frame_0','blank_0',
+                            'check_frame','blank_0',
                             'blank_n','crop_0',
                             'crop_n','threshold',
                             'diameter','minmass',
@@ -101,7 +101,7 @@ class main_gui(wx.Frame):
         self.input_values = [## int
                              self.input_x,self.input_y,
                              self.input_w,self.input_h,
-                             self.input_frame_0,self.input_blank_0,
+                             self.input_check_frame,self.input_blank_0,
                              self.input_blank_n,self.input_crop_0,
                              self.input_crop_n,self.input_threshold,
                              self.input_diameter,self.input_minmass,
@@ -208,7 +208,7 @@ class main_gui(wx.Frame):
             self.input_blank_n.SetValue(str(self.detector.n_frames))
             self.input_crop_0.SetValue('0')
             self.input_crop_n.SetValue(str(self.detector.n_frames))
-            self.input_frame_0.SetValue('0')
+            self.input_check_frame.SetValue('0')
             self.input_ecc_low.SetValue('0')
             self.input_ecc_high.SetValue('1')
             self.input_ecc_high.SetValue('1')
@@ -222,7 +222,7 @@ class main_gui(wx.Frame):
             except:
                 pass
             if self.detector.n_frames < self.input_frame_rate*2:            
-                self.input_frame_0.SetValue(str(self.detector.n_frames))
+                self.input_check_frame.SetValue(str(self.detector.n_frames))
             
             ## Try to make the local linear regression window size 2 seconds, but if not then 35% of the frames in the video
             if self.detector.n_frames < self.input_frame_rate*2:
@@ -493,7 +493,7 @@ class main_gui(wx.Frame):
        
         ## Step 1 boxes
         self.text_step_1a = wx.StaticText(id=wxID_text_step_1a,
-              label=u'Step 1a: Find video', name='text_step_1a', parent=self.panel1, 
+              label=u'Step 1a: Specify a video', name='text_step_1a', parent=self.panel1, 
               pos=wx.Point(col1,10),
               size=wx.Size(box_dimensions),style = wx.ALIGN_CENTER)
                       
@@ -663,11 +663,11 @@ class main_gui(wx.Frame):
 
         ## Check frames
         self.text_check_frames = wx.StaticText(id=wxID_text_check_frames,
-              label=u'Check frames:', name='text_check_frames', parent=self.panel1,
+              label=u'Check frame:', name='text_check_frames', parent=self.panel1,
               pos=wx.Point(col4, 80), size=wx.Size(115, 17), style=0)
 
-        self.input_frame_0 = wx.TextCtrl(id=wxID_input_frame_0,
-              name=u'input_frame_0', parent=self.panel1, pos=wx.Point(col4 + 130, 80),
+        self.input_check_frame = wx.TextCtrl(id=wxID_input_check_frame,
+              name=u'input_check_frame', parent=self.panel1, pos=wx.Point(col4 + 130, 80),
                size=wx.Size(small_box_dimensions), style=0, value=u'0')
         
         ## Vials
@@ -879,7 +879,7 @@ wxID_text_x, wxID_input_x,
 wxID_text_y, wxID_input_y,
 wxID_text_h, wxID_input_h,
 wxID_text_w, wxID_input_w,
-wxID_text_check_frames, wxID_input_frame_0, 
+wxID_text_check_frames, wxID_input_check_frame, 
 wxID_text_background_frames,wxID_input_blank_0, wxID_input_blank_n,
 wxID_text_crop_frames,wxID_input_crop_0,wxID_input_crop_n,
 wxID_text_vials, wxID_input_vials,
