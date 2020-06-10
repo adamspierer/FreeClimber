@@ -183,6 +183,9 @@ class detector(object):
         ## Project folder specific paths
         if self.path_project == None: self.path_project = os.path.join(folder,self.name + '.cfg')
 
+        ## For future release
+#         self.path_review_diagnostic = self.path_project + '/review_at_R_%s/review.log' %self.review_R
+        
         ## Extracting file details and naming individual vials
         self.file_details = dict(zip(self.naming_convention.split('_'),self.name.split('_')))
         self.experiment_details = self.name.split('_')
@@ -1026,8 +1029,12 @@ class detector(object):
         ## Finding the frames that flank the most linear portion 
         ##    of the y vs. t curve for all points, not just by vials
         if self.debug: print('-- [ step 6b ] Plotting data: Re-running local linear regression on all')
-        begin = self.local_linear_regression(self.df_filtered).iloc[0].first_frame.astype(int)
+        _result = self.local_linear_regression(self.df_filtered)
+        begin = _result.iloc[0].first_frame.astype(int)
         end = begin + self.window
+        
+        ## For future release
+#         min_R = _result.iloc[0].r_value ##
 
         ## Need only True spots, but not inverted -- df_big
         spots = self.df_big[self.df_big.True_particle]
@@ -1052,6 +1059,11 @@ class detector(object):
         ## Saving diagnostic plot
         fig.tight_layout()
         plt.savefig(self.path_diagnostic,dpi=500, transparent = True)
+
+        ## Future revisions
+#         if min_R < self.review_R:
+#             plt.savefig(self.path_review_diagnostic,dpi=100, transparent = True)
+            
         plt.close()
         print('                --> Saved:',self.path_diagnostic.split('/')[-1])
         return
@@ -1070,6 +1082,9 @@ class detector(object):
         ## Adding in experimental details from naming convention into the slopes DataFrame
         for item in self.file_details.keys():
             self.df_slopes[item] = np.repeat(self.file_details[item],self.df_slopes.shape[0])
+
+        slope_columns = [item for item in self.file_details.keys()] + slope_columns
+        self.df_slopes = self.df_slopes[slope_columns]
     
         ## Saving slope file
         self.df_slopes.to_csv(self.path_slope,index=False)
