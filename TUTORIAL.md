@@ -269,6 +269,7 @@ For each of the scripts provided, help documentation is provided if you type:
 - The `<file_name.raw.csv>` output is also really useful for passing to `trackpy` for linking spots together into tracks. Read more on TrackPy particle __tracking__ [API](http://soft-matter.github.io/trackpy/v0.4.2/api.html). Briefly, the file can be loaded in and saved as `f`, which will seamlessly integrate into the `Step 3: Link features into particle trajectories` in the [TrackPy Walkthrough](http://soft-matter.github.io/trackpy/v0.4.2/tutorial/walkthrough.html).
 
 <h4>Table of variables</h4>
+
 |Variable name |	Data type |	Explanation|
 | --- | --- | --- |
 |x |	Integer |	Leftmost pixel of ROI for analysis|
