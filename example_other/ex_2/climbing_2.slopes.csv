@@ -1,0 +1,8 @@
+climbing,2,vial_ID,first_frame,last_frame,slope,intercept,r_value,p_value,std_err
+climbing,2,climbing__1,37,89,1.8536,-6.5959,0.9855,0.0,0.0282
+climbing,2,climbing__2,34,86,1.7424,18.8872,0.9961,0.0,0.0136
+climbing,2,climbing__3,14,66,1.4266,19.7492,0.9825,0.0,0.0239
+climbing,2,climbing__4,6,58,1.749,23.7418,0.9907,0.0,0.0213
+climbing,2,climbing__5,63,115,0.9409,21.7489,0.9786,0.0,0.0175
+climbing,2,climbing__6,4,56,1.1854,26.2914,0.981,0.0,0.0207
+climbing,2,climbing__all,13,65,1.3234,23.0174,0.9952,0.0,0.0115
