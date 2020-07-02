@@ -276,4 +276,26 @@ For each of the scripts provided, help documentation is provided if you type:
 |y |	Integer	| Topmost pixel of ROI for analysis|
 |w | Integer |	Width of ROI for analysis|
 |h | Integer |	Height of ROI for analysis|
-
+|check\_frame |	Integer	| First frame to display in Test Parameters|
+|blank\_0 |	Integer	| First frame of range to subtract background|
+|blank\_n |	Integer	| Last frame of range to subtract background|
+|crop\_0 |	Integer	| First frame of range to crop|
+|crop\_n |	Integer	| Last frame of range to crop|
+|threshold |	Integer	| Threshold for filtering against points|
+|diameter	|Integer	| Estimated diameter of spot in pixels|
+|minmass	|Integer	| The minimum integrated brightness|
+|maxsize | Integer| The maximum distance across to consider a spot|
+|ecc\_low |	Integer	| Lower bounds for spot circularity|
+|ecc\_high |	Integer	| Upper bounds for spot circularity|
+|vials	| Integer |	Number of vials in video|
+|window |	Integer	| Number of frames for sliding window|
+|pixel\_to\_cm|	Integer	| Conversion factor for pixels to centimeters|
+|frame\_rate	|Integer |	Video frame rate|
+|vial\_ID\_vars	|Integer |	Number of variables in naming convention that are consistent across a time-dependent experiment (ex. genotype, sex)|
+|outlier\_TB |	String |	Top and bottom sensitivity factor for trimming outliers|
+|outlier\_LR |	String |	Left and right sensitivity factor for trimming outliers|
+|naming\_convention |	String |	Experimental conditions in file name|
+|path\_project| String |	Path to parent folder containing experimental files, configuration\_file.cfg and end results.csv file eventually saved here|
+|file\_suffix |	String |	Suffix of videos being processed|
+|convert\_to\_cm\_sec |	Boolean | True if converting output slope to centimeters per second|
+|trim\_outliers |	Boolean | True if trimming outliers|
