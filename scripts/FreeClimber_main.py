@@ -28,7 +28,6 @@ import detector as detector
 class FreeClimber(object):
     def __init__(self, config_file):
         '''Initializing the detector with the configuration file and arguments'''
-        
         self.config_file = config_file
         self.args = define_argument_parser()
         if self.args.debug: print('FreeClimber.__init__')
@@ -227,11 +226,11 @@ class FreeClimber(object):
         if self.args.debug: print('FreeClimber.create_log_header')
     
         try:
-            os.mkdir(self.path_project + '/log/')
+            os.mkdir(self.path_project + 'log/')
         except:
             pass
-        self.path_completed = self.path_project + '/log/completed.log'
-        self.path_skipped = self.path_project + '/log/skipped.log'
+        self.path_completed = self.path_project + 'log/completed.log'
+        self.path_skipped = self.path_project + 'log/skipped.log'
         path_list,text_list = [self.path_completed,self.path_skipped],['completed','skipped']
         time_stamp = str(ctime())
                 
@@ -498,9 +497,7 @@ if __name__ == '__main__':
     fc.check_variables() # Not ready for this release
 #
     def check_variables(self):
-        
-
-
+    
         ## Making sure diameter is an odd number
         if int(self.diameter) % 2 == False:
             self.diameter = int(self.diameter) + 1

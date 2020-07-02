@@ -7,6 +7,7 @@
 ## Purpose   : Script contains main functions used in FreeClimber package
 
 version = '0.3.2'
+publication = False
 
 import os
 import sys
@@ -22,7 +23,6 @@ from scipy.signal import find_peaks,peak_prominences
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-# from matplotlib.colors import LinearSegmentedColormap
 
 ## Issue with 'SettingWithCopyWarning' in step_3
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -750,7 +750,7 @@ class detector(object):
                 if self.debug: print('detector.get_trim_lines ::',edge,'@',crop,'(no crop)')            
                 return crop
                 
-    def bin_vials(self, df, vials, percentage=1,top=False):
+    def bin_vials(self, df, vials, percentage=1,top=False, bin_lines=None):
         '''Bin spots into vials. Function takes into account all points along the x-axis, 
           and divides them into specified number of bins based on the min and max
           points in the array.
@@ -765,11 +765,15 @@ class detector(object):
 
         ## Bin vials, conditional for vial quantity
         if vials == 1:
-            bin_lines = [df.x.min(),df.x.max()]
+            if type(bin_lines) == 'list': bin_lines = bin_lines
+            else: bin_lines = [df.x.min(),df.x.max()] 
             spot_assignments = np.repeat(1,df.shape[0])
         else: ## More than 1 vial
+            if type(bin_lines) == 'list': bin_lines = bin_lines
+            else: bin_lines = pd.cut(df.x,vials,include_lowest=True,retbins=True)[1]
+
+            ## Assign spots to vials
             _labels = range(1,vials+1)
-            bin_lines = pd.cut(df.x,vials,include_lowest=True,retbins=True)[1]
             spot_assignments = pd.cut(df.x, bins=bin_lines, labels=_labels)
             spot_assignments = pd.Series(spot_assignments).astype('int')
         
@@ -959,10 +963,23 @@ class detector(object):
             
             self.df_big = self.df_big[(self.df_big.x >= self.left_crop) & (self.df_big.x <= self.right_crop) &
                                         (self.df_big.y <= self.top_crop) & (self.df_big.y >= self.bottom_crop)]
-
+        
         ## Assigning spots to vials, 0 if False AND outside of the True point range
         print('-- [ Step 4e ]   - Assigning spots to vials')
         self.bin_lines, self.df_big.loc[self.df_big['True_particle'],'vial'] = self.bin_vials(self.df_big[self.df_big.True_particle],vials = self.vials)
+
+        ########################################
+        ## Beginning of publication insert
+        if publication:
+            df=self.df_big
+            self.bin_lines = self.bin_vials(df[df.y > 120], vials= self.vials)[0]
+            df['vial'] = np.repeat(0,df.shape[0])
+            vial_assignments = self.bin_vials(df, vials = self.vials, bin_lines = self.bin_lines)[1]
+            df.loc[(df.x >= self.bin_lines[0]) & (df.x <= self.bin_lines[-1]),'vial'] = vial_assignments
+            self.df_big = df
+        ## End of publication insert
+        ########################################
+        
         self.df_big.loc[self.df_big['True_particle']==False,'vial'] = 0
 
         print('-- [ Step 4f ]   - Saving raw data file')
@@ -977,7 +994,8 @@ class detector(object):
         print('-- [ step 5  ] Setting up DataFrames for local linear regression')
 
         ## Filtering spots and pruning unnecessary columns
-        self.df_filtered = self.df_big[self.df_big.True_particle]
+        self.df_filtered = self.df_big[(self.df_big.True_particle) & (self.df_big.vial != 0)]
+        if self.debug: print('self.df_filtered.shape:',self.df_filtered.shape)
         self.df_filtered = self.df_filtered.drop(['ecc','signal','ep','raw_mass','mass','size','True_particle'],axis=1)
         self.df_filtered = self.df_filtered.sort_values(by=['vial','frame','y','x'])    
 
@@ -1058,12 +1076,14 @@ class detector(object):
 
         ## Saving diagnostic plot
         fig.tight_layout()
-        plt.savefig(self.path_diagnostic,dpi=500, transparent = True)
+        plt.savefig(self.path_diagnostic,dpi=300, transparent = True)
+#         plt.savefig(self.path_project + '/diagnostic_plots/' + self.name + '.diagnostic.png',dpi=100, transparent = True)        
 
-        ## Future revisions
+        ## Future release
 #         if min_R < self.review_R:
 #             plt.savefig(self.path_review_diagnostic,dpi=100, transparent = True)
             
+        plt.close()
         plt.close()
         print('                --> Saved:',self.path_diagnostic.split('/')[-1])
         return
