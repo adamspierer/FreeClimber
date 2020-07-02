@@ -1265,8 +1265,12 @@ class detector(object):
         ## Filters DataFrame of detected spots
         self.step_4() 
 
-#         self.step_5(gui=True)
+        ## Executing final steps
+        self.step_5()
+        self.step_6(gui=True)
+        self.step_7()
         
+        #### Working through the GUI plots        
         ## Setting plot (upper left) for background image
         if self.debug: print('detector.parameter_testing: Subplot 0: Background image')
         axes[0].set_title("Background Image")
@@ -1274,7 +1278,6 @@ class detector(object):
         axes[0].set_xlim(0,self.w)
         axes[0].set_ylim(self.h,0)
         axes[0].scatter([0,self.w],[0,self.h],alpha=0,marker='.')
-
         
         ## Slice df_big into true vs. false spots
         if self.debug: print('detector.parameter_testing: Slicing DataFrames')
@@ -1282,7 +1285,13 @@ class detector(object):
         spots_true = self.df_big[self.df_big['True_particle']]
         
         ## Binning and coloring spots
-        bin_lines,spots_true['vial'] = self.bin_vials(spots_true,vials = self.vials)
+#         bin_lines,spots_true['vial'] = self.bin_vials(spots_true,vials = self.vials)
+#         spots_true = spots_true[(spots_true.x >= self.bin_lines.min()) & (spots_true.x <= self.bin_lines.max())]
+
+        spots_true['vial'] = np.repeat(0,spots_true.shape[0])
+        vial_assignments = self.bin_vials(spots_true, vials = self.vials, bin_lines = self.bin_lines)[1]
+        spots_true.loc[(spots_true.x >= self.bin_lines[0]) & (spots_true.x <= self.bin_lines[-1]),'vial'] = vial_assignments
+
         spots_true.loc[:,'color'] = spots_true.vial.map(dict(zip(range(1,self.vials+1), self.color_list)))
         bins=40
 
@@ -1328,7 +1337,8 @@ class detector(object):
         y_max = np.histogram(self.df_big.signal,bins=bins)[0].max()
         axes[4].vlines(self.threshold,0,y_max)
 
-        self.step_5()
+        ## Calculating local linear regression
+#         self.step_5()
         
         ## Setting plots for local linear regression
         df = self.df_filtered.sort_values(by='frame')
@@ -1347,7 +1357,6 @@ class detector(object):
             ## Local linear regression
             begin = self.local_linear_regression(_df).iloc[0].first_frame.astype(int)
             end = begin + self.window        
-#             frames = begin,end
                         
             ## Plotting all points
             axes[2].plot(_df.groupby('frame').frame.mean() / convert_x,
@@ -1357,7 +1366,6 @@ class detector(object):
             _df = _df[(_df.frame >= begin) & (_df.frame <= end)]
             axes[2].plot(_df.groupby('frame').frame.mean() / convert_x,
            _df.groupby('frame').y.mean() / convert_y,color = color, label = label)
-
 
         # Deciding number of columns for legend
         if self.vials > 10: ncol = 3
@@ -1372,7 +1380,4 @@ class detector(object):
         axes[2].set(title = labels[0], ylabel=labels[1],xlabel=labels[2]) 
         axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
-        ## Executing final steps
-        self.step_6(gui=True)
-        self.step_7()
         return
