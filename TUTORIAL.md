@@ -300,4 +300,4 @@ For each of the scripts provided, help documentation is provided if you type:
 |convert\_to\_cm\_sec |	Boolean | True if converting output slope to centimeters per second|
 |trim\_outliers |	Boolean | True if trimming outliers|
 
-* - Can be either an integer or float
+\* - Can be either an integer or float
