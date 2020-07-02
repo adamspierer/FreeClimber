@@ -254,6 +254,12 @@ For each of the scripts provided, help documentation is provided if you type:
 
     python <path_to_file.py> -h
 
+<h4>Additional test videos</h4>
+
+There are five additional test videos in the `example_other` folder. These videos have two from the same rig set up as the main test/example. One of these has all six vials filled (climbing\_1), while the other is similar but demonstrates how the program works well when there is a wagon-wheel/banding effect (climbing\_2). 
+
+The remaining three videos represent how an improvised rig might perform, in order of decreasing quality. In the first of these, (climbing\_3) has a clean background and uses a custom rig (piece of wood with even spaced vial-diameter holes drilled in the top, held together with a hinge and rubberbands). This is the same video from the gif at the beginning of the README and TUTORIAL files. The next video (climbing\_4) uses a test tube rack as the vial holder, has a dramatic shift of the rig in the first second, and includes partially erased sharpie marks on the vials. These marks might otherwise be false positives without the background subtraction step and movement in the first frames requires that the video is cropped in the program before processing. The third of these videos (climbing\_5) is on the lower end for quality in what FreeClimber can handle. It has four vials (three with flies) strapped to a piece of plywood and partially resting on a cardboard box. The vials have some abrasion so there is not always a clear shot of the flies. While this video is far from an ideal input, it is nonetheless impressive that data can be extracted from the video.
+
 <h4>Tips</h4>
 
 - We recommend trimming the length of the video down to the length you are interested in analyzing and having a single replicate of the assay per video. To slice videos efficiently using a command line-based tool, we recommend using `FFmpeg`, a well documented media manipulation tool: https://trac.ffmpeg.org/wiki/Seeking. Alternatively, frames to trim can be specified in the `Crop frames` fields of the GUI.

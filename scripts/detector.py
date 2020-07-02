@@ -1162,6 +1162,7 @@ class detector(object):
         
         ## Coloring spots by vial
         df = df.sort_values(by='vial')
+        df = df[df.vial != 0]
         if self.vials >= 1:
             ax.scatter(df.x, df.y, 
                         s = 30, 
