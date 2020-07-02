@@ -275,7 +275,7 @@ For each of the scripts provided, help documentation is provided if you type:
 |y |	Integer	| Topmost pixel of ROI for analysis|
 |w | Integer |	Width of ROI for analysis|
 |h | Integer |	Height of ROI for analysis|
-|check_frame |	Integer	| First frame to display in Test Parameters|
+|check\_frame |	Integer	| First frame to display in Test Parameters|
 |blank\_0 |	Integer	| First frame of range to subtract background|
 |blank\_n |	Integer	| Last frame of range to subtract background|
 |crop\_0 |	Integer	| First frame of range to crop|
