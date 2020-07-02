@@ -85,9 +85,19 @@ The `example` folder contains the video file used in the Tutorial. These files c
 
 **Inputs** (by file suffix):
 
+In ./example folder (main test file):
+
 - **.h264** - Video file (default Raspberry Pi output, see note below).
-- **.mp4** - Video file (more standard video file type).
+- **.mov** - Video file (more standard video file type).
 - **.cfg** - Configuration file (generated from GUI but can be modified like a text document).
+
+In ./example\_other folder (additional test files):
+
+- **/ex_1/climbing_1.h264** - Clean background, rig from example folder, with different numbers of flies per vial.
+- **/ex_2/climbing_2.h264** - Clean background, rig from example folder, with similar numbers of flies per vial, plus wagon-wheel banding effect.
+- **/ex_3/climbing_3.h264** - Clean background, homemade rig 1, with similar numbers of flies per vial. Same video as gif in overview.
+- **/ex_4/climbing_4.h264** - Heterogeneous background, homemade rig 2/test tube holder, with similar numbers of flies.
+- **/ex_5/climbing_5.h264** - Heterogeneous background, homemade rig 3, borderline unusable quality.
 
 Outputs (by file suffix):
 

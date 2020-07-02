@@ -57,11 +57,12 @@ We recommend running this package in an Anaconda-based virtual environment. Anac
 
 For more details about creating a conda virtual environment, see [here](https://uoa-eresearch.github.io/eresearch-cookbook/recipe/2014/11/20/conda/). Once the environment is set up and activated, we can install the dependencies listed in the `Requirements` section above.
 
-**Installation using PyPi** <!--- (Recommended)**: --->
+**Installation using PyPi** <!-- (Recommended)**: -->
 
 	pip install FreeClimber
+	pip install ffmpeg-python
 
-<!---
+<!--
 **Using conda (still in testing)**:
 
     conda install -c adamspierer freeclimber
@@ -146,7 +147,7 @@ NOTE: Images are indexed from upper left to lower right, which is different from
 
 <h3>Step 3 - Specify spot parameters</h3>
 
-These parameters configure the detector and filter for candidate vs. true spots based on a `minmass`, signal `threshold`, and spot eccentricity/`ecc/circularity`. If you are processing many videos, it is best practice to optimizing these parameters with a few representative videos and check out the `.spot_check.png` file to determine if the final three variables are suitable.
+These parameters configure the detector and filter for candidate vs. true spots based on a `minmass`, signal `threshold`, and spot eccentricity/`ecc`/circularity. If you are processing many videos, it is best practice to optimizing these parameters with a few representative videos and check out the `.spot_check.png` file to determine if the final three variables are suitable.
 
 **Diameter** - Approximate diameter for estimating a spot. Only odd numbers, rounding up when in doubt.
 
@@ -156,7 +157,7 @@ These parameters configure the detector and filter for candidate vs. true spots 
 
 **Threshold** - The signal threshold value for filtering spots. Specify a threshold, or leave as "auto" for the program to calculate one. The "auto" threshold looks for the local minimum between two local maximum, or takes the halfway mark between the global maximum.
 
-**Ecc/circularity** - Each spot has a measure of its circularity (0 is more circular). In our experience, the upper limit is more important, and True spots rarely exceeded 0.6.
+**Ecc/circularity** - Each spot has a measure of its circularity (0 is more circular). In our experience, the upper limit is more important, and True spots don't often exceeded 0.6.
 
 For more information, see the [trackpy documentation](http://soft-matter.github.io/trackpy/v0.4.2/generated/trackpy.locate.html#trackpy.locate).
 
@@ -275,26 +276,26 @@ For each of the scripts provided, help documentation is provided if you type:
 |w | Integer |	Width of ROI for analysis|
 |h | Integer |	Height of ROI for analysis|
 |check_frame |	Integer	| First frame to display in Test Parameters|
-|blank_0 |	Integer	| First frame of range to subtract background|
-|blank_n |	Integer	| Last frame of range to subtract background|
-|crop_0 |	Integer	| First frame of range to crop|
-|crop_n |	Integer	| Last frame of range to crop|
+|blank\_0 |	Integer	| First frame of range to subtract background|
+|blank\_n |	Integer	| Last frame of range to subtract background|
+|crop\_0 |	Integer	| First frame of range to crop|
+|crop\_n |	Integer	| Last frame of range to crop|
 |threshold |	Integer	| Threshold for filtering against points|
 |diameter	|Integer	| Estimated diameter of spot in pixels|
 |minmass	|Integer	| The minimum integrated brightness|
 |maxsize | Integer| The maximum distance across to consider a spot|
-|ecc_low |	Integer	| Lower bounds for spot circularity|
-|ecc_high |	Integer	| Upper bounds for spot circularity|
+|ecc\_low |	Integer	| Lower bounds for spot circularity|
+|ecc\_high |	Integer	| Upper bounds for spot circularity|
 |vials	| Integer |	Number of vials in video|
 |window |	Integer	| Number of frames for sliding window|
-|pixel_to_cm|	Integer	| Conversion factor for pixels to centimeters|
-|frame_rate	|Integer |	Video frame rate|
-|vial_ID_vars	|Integer |	Number of variables in naming convention that are consistent across a time-dependent experiment (ex. genotype, sex)|
-|outlier_TB |	String |	Top and bottom sensitivity factor for trimming outliers|
-|outlier_LR |	String |	Left and right sensitivity factor for trimming outliers|
-|naming_convention |	String |	Experimental conditions in file name|
-|path_project| String |	Path to parent folder containing experimental files, configuration_file.cfg and end results.csv file eventually saved here|
-|file_suffix |	String |	Suffix of videos being processed|
-|convert_to_cm_sec |	Boolean | True if converting output slope to centimeters per second|
-|trim_outliers |	Boolean | True if trimming outliers|
+|pixel\_to\_cm|	Integer	| Conversion factor for pixels to centimeters|
+|frame\_rate	|Integer |	Video frame rate|
+|vial\_ID\_vars	|Integer |	Number of variables in naming convention that are consistent across a time-dependent experiment (ex. genotype, sex)|
+|outlier\_TB |	String |	Top and bottom sensitivity factor for trimming outliers|
+|outlier\_LR |	String |	Left and right sensitivity factor for trimming outliers|
+|naming\_convention |	String |	Experimental conditions in file name|
+|path\_project| String |	Path to parent folder containing experimental files, configuration\_file.cfg and end results.csv file eventually saved here|
+|file\_suffix |	String |	Suffix of videos being processed|
+|convert\_to\_cm\_sec |	Boolean | True if converting output slope to centimeters per second|
+|trim\_outliers |	Boolean | True if trimming outliers|
 
