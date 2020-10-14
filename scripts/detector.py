@@ -23,6 +23,7 @@ from scipy.signal import find_peaks,peak_prominences
 
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from matplotlib.lines import Line2D
 
 ## Issue with 'SettingWithCopyWarning' in step_3
 pd.options.mode.chained_assignment = None  # default='warn'
@@ -231,7 +232,11 @@ class detector(object):
         
         ## Extracting video meta-data
         try:
-            probe = ffmpeg.probe(file)
+            try:
+                probe = ffmpeg.probe(file)
+            except:
+                print('!! Could not read %s into FreeClimber. Likely due to unacceptable video file or FFmpeg not installed')
+                raise SystemExit
             video_info = next(x for x in probe['streams'] if x['codec_type'] == 'video')
             self.width = int(video_info['width'])
             self.height = int(video_info['height'])
@@ -800,8 +805,10 @@ class detector(object):
 
         ## Defining empty variables
         result_list, result = [],pd.DataFrame()
-        llr_columns = ['first_frame','last_frame','slope','intercept','r','pval','err']
-
+        llr_columns = ['first_frame','last_frame','slope','intercept','r','pval','err','count_llr','count_all']
+        
+        _count_all = np.median(df.groupby('frame').frame.count())
+        
         ## Iterating through the window
         for i in range(len(self.image_stack) - self.window):
             ## Defining search parameters for each iteration
@@ -819,16 +826,17 @@ class detector(object):
                 ## Grouping points by frame
                 _frame = df_window.groupby('frame').frame.mean()
                 _pos  = df_window.groupby('frame').y.mean()
+                _count_llr = np.median(df_window.groupby('frame').frame.count())
 
                 ## Performing linear regression on subset and formatting output to list
                 _result = linregress(_frame,_pos)
-                _result = [start,stop] + np.hstack(_result).tolist()
+                _result = [start,stop] + np.hstack(_result).tolist() + [_count_llr,_count_all]
 
                 ## If slope is not significantly different from 0, then set slope = 0
                 if _result[-2] >= 0.05: _result[2] = 0
 
             ## Have row of NaN if unable to process
-            except: _result = [start,stop] + [np.nan,np.nan,np.nan,np.nan,np.nan]
+            except: _result = [start,stop] + [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan]
 
             ## Add results list to a list of lists
             result_list.append(_result)
@@ -1091,7 +1099,7 @@ class detector(object):
     def step_7(self):
         '''Writing the video's slope file'''
         print('-- [ step 7  ] Setting up slopes file')
-        slope_columns = ['vial_ID','first_frame','last_frame','slope','intercept','r_value','p_value','std_err']
+        slope_columns = ['vial_ID','first_frame','last_frame','slope','intercept','r_value','p_value','std_err','count_llr','count_all']
         
         ## Converting dictionary of local linear regressions into a DataFrame
         self.df_slopes = pd.DataFrame.from_dict(self.result,orient='index',columns = slope_columns)
@@ -1312,18 +1320,68 @@ class detector(object):
         axes[1].set_xlim(0,self.w)
         axes[1].set_ylim(self.h,0)
         
+        ##########
         ## Fly counts
-        axes[5].plot(spots_true.groupby('frame').frame.mean(),
-                     spots_true.groupby('frame').frame.count(), 
-                     label = 'Fly count', color = 'g',alpha = .5)
-        axes[5].hlines(np.median(spots_true.groupby('frame').frame.count()),
-                       self.df_big.frame.min(),self.df_big.frame.max(),
-                       linestyle = '--',alpha = .5, 
-                       color = 'gray', label = 'Median no. flies')
-        axes[5].set(title = 'Flies per frame',
-                        ylabel='Flies past threshold',
-                        xlabel='Frame') 
-        axes[5].legend(frameon=False, fontsize = 'small')
+#         axes[5].plot(spots_true.groupby('frame').frame.mean(),
+#                      spots_true.groupby('frame').frame.count(), 
+#                      label = 'Fly count', color = 'g',alpha = .5)
+#                      
+#         axes[5].hlines(np.median(spots_true.groupby('frame').frame.count()),
+#                        self.df_big.frame.min(),self.df_big.frame.max(),
+#                        linestyle = '--',alpha = .5, 
+#                        color = 'gray', label = 'Median no. flies')
+#         axes[5].set(title = 'Flies per frame',
+#                         ylabel='Flies detected',
+#                         xlabel='Frame') 
+#         axes[5].legend(frameon=False, fontsize = 'small')
+
+        ##########
+        df = self.df_filtered.sort_values(by='frame')
+        for V in range(1,self.vials + 1):
+            color = self.color_list[V-1]
+            _df = df[df.vial == V]
+
+            ## Local linear regression
+            begin = self.local_linear_regression(_df).iloc[0].first_frame.astype(int)
+            end = begin + self.window        
+                        
+            ## Plotting all points
+            axes[5].plot(_df.groupby('frame').frame.unique(),
+                _df.groupby('frame').y.count(),alpha = .3, color = color,label='') 
+            
+            ## Plotting most linear points
+            _df = _df[(_df.frame >= begin) & (_df.frame <= end)]
+            axes[5].plot(_df.groupby('frame').frame.unique(),
+                _df.groupby('frame').frame.count() ,color = color, alpha = .5)
+    
+            axes[5].hlines(np.median(_df.groupby('frame').frame.count()),
+                       df.frame.min(),df.frame.max(),
+                       linestyle = '--',alpha = .7, 
+                       color = color)
+
+
+        # Deciding number of columns for legend
+        if self.vials > 10: ncol = 3
+        elif self.vials > 5: ncol = 2
+        else: ncol=1
+        
+        ## Setting labels
+        label_y,label_x = '(pixels)','Frames'
+        if self.convert_to_cm_sec: 
+            label_x,label_y = 'Seconds','(cm)'
+        labels = ['Flies detected per frame','Flies detected','Frame']
+        axes[5].set(title = labels[0], ylabel=labels[1],xlabel=labels[2]) 
+        axes[5].set_ylim(ymin = 0,ymax = np.max(_df.groupby('frame').frame.count())*1.2)
+#         axes[5].legend(frameon=False, fontsize='x-small', ncol=ncol)
+
+        custom_lines = [Line2D([0], [0], color='k', linestyle = '--', alpha = .9),
+                        Line2D([0], [0], color='k', linestyle = '-', alpha = .5)]
+        custom_labels = ['Median', 'All frames']
+        axes[5].legend(custom_lines, custom_labels,frameon=False, fontsize='x-small', ncol=ncol)
+
+        #############
+
+
 
         ## Mass histogram
         axes[3].set_title('Mass Distribution')
@@ -1357,7 +1415,7 @@ class detector(object):
             ## Local linear regression
             begin = self.local_linear_regression(_df).iloc[0].first_frame.astype(int)
             end = begin + self.window        
-                        
+            
             ## Plotting all points
             axes[2].plot(_df.groupby('frame').frame.mean() / convert_x,
                _df.groupby('frame').y.mean() / convert_y,alpha = .35, color = color,label='') 
@@ -1381,4 +1439,3 @@ class detector(object):
         axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
         return
-
