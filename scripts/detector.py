@@ -1381,3 +1381,4 @@ class detector(object):
         axes[2].legend(frameon=False, fontsize='x-small', ncol=ncol)   
 
         return
+
