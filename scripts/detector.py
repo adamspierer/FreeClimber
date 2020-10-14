@@ -3,10 +3,10 @@
 
 ## File name : detector.py
 ## Created by: Adam N. Spierer
-## Date      : May 2020
-## Purpose   : Script contains main functions used in FreeClimber package
+## Date      : October 2020
+## Purpose   : Script contains main functions used in FreeClimber package, as well as added functionality
 
-version = '0.3.2'
+version = '0.4.0'
 publication = False
 
 import os
