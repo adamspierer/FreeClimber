@@ -413,18 +413,22 @@ class detector(object):
         if self.debug: print('| Cropped and converted |',end='')
         plt.title('Cropped and converted, frame: %s' % str(frame))
         plt.imshow(cropped_converted[frame], cmap = cm.Greys_r, **kwargs)
+        plt.ylabel('Pixels')
 
         ## Displaying the background image
         plt.subplot(312)
         if self.debug: print(' Background image |',end='')
         plt.title('Background image')
         plt.imshow(background, cmap = cm.Greys_r, **kwargs)
+        plt.ylabel('Pixels')
 
         ## Displaying the background subtracted, test frame image
         plt.subplot(313)
         if self.debug: print(' Subtracted background')
         plt.title('Subtracted background')
         plt.imshow(subtracted[frame], cmap = cm.Greys_r, **kwargs)
+        plt.xlabel('Pixels')
+        plt.ylabel('Pixels')
 
         plt.tight_layout()
         return
@@ -505,6 +509,9 @@ class detector(object):
             plt.vlines(threshold,0,y_max,color = 'k', label='User-defined')
             if predict_threshold:
                 plt.legend(frameon=False)
+        
+        ## Adding y-axis labels
+        plt.ylabel("Counts")
         return
 
     def spot_checker(self, spots, metrics=['signal'], image=None, **kwargs):
@@ -538,6 +545,7 @@ class detector(object):
             count += 1
             plt.subplot(len(metrics),2,count)
             plt.title('Histogram for: %s' % col)
+            plt.xlabel(col)
             self.colored_hist(spots,metric=col, bins = 40,predict_threshold=predict)
     
             ## Drawing image plot, colored by metric
@@ -545,6 +553,9 @@ class detector(object):
             plt.subplot(len(metrics),2,count)
             plt.title('Spot overlay: %s' % col)
             self.image_metrics(spots,image, metric=col,**kwargs)
+            plt.ylabel('Pixels')
+            if col=='signal':
+                plt.xlabel('Pixels')
 
         plt.tight_layout()
         return
@@ -918,6 +929,7 @@ class detector(object):
             ## Creating image plot with rectangle superimposed over first frame
             plt.figure()
             self.display_images(self.clean_stack,self.background,self.spot_stack,frame=20)
+            plt.tight_layout()
             plot_name = self.name_nosuffix + '.processed.png'
             plt.savefig(plot_name, dpi=100)
             plt.close()
