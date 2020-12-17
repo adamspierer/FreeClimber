@@ -178,9 +178,7 @@ We plan to release maintenance updates as needed, though we are unlikely to modi
 
 <h3>Citing this work</h3>
 If you use FreeClimber in your work, please cite:
-> A.N. Spierer, D. Yoon, CT. Zhu, and DM. Rand. (2020) FreeClimber: Automated 
-> quantification of climbing performance in <i>Drosophila</i>. <i>Journal of</i>
-> <i>Experimental Biology</i>. DOI: 10.1242/jeb.229377
+> A.N. Spierer, D. Yoon, CT. Zhu, and DM. Rand. (2020) FreeClimber: Automated quantification of climbing performance in <i>Drosophila</i>. <i>Journal of Experimental Biology</i>. DOI: 10.1242/jeb.229377
 
 <h3>License</h3>
 
