@@ -214,6 +214,28 @@ class detector(object):
         if self.frame_rate <= 0:
             print('!! Issue with frame_rate: was %s, now 1' %(self.frame_rate))
             self.frame_rate = 1
+        
+        ## Window size vs. frames to test
+        if (self.crop_n - self.crop_0) > self.window:
+            print('!! Issue with window size (%s) being less than frames. Window size set to 80 percent of desired frames' %(self.window))
+            self.window = (self.crop_n - self.crop_0) * 0.8
+		
+		## blank vs. crop frames
+        if self.blank_0 < self.crop_0:
+            print('!! Issue with blank frames vs. crop frames. Setting blank_0 (%s) = crop_n (%s)' % (self.blank_0,self.crop_0))
+            self.blank_0 = self.crop_0
+        if self.blank_n > self.crop_n:
+            print('!! Issue with blank frames vs. crop frames. Setting blank_n (%s) = crop_n (%s)' % (self.blank_n,self.crop_n))
+            self.blank_n = self.crop_n
+        
+        ## Check frame is still valid
+        if self.check_frame < self.crop_0:
+            print('!! Issue with check_frame < crop_0 (min. cropped frame). Now, check_frame = crop_0 = %s' %self.check_frame)
+            self.check_frame = self.crop_0
+        if self.check_frame > self.crop_n:
+            print('!! Issue with check_frame > crop_n (max cropped frame). Now, check_frame = crop_n = %s' %self.check_frame)
+            self.check_frame = self.crop_n
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         return
 
     ## Video processing functions
@@ -856,6 +878,13 @@ class detector(object):
         x,y = self.x,self.y
         x_max, y_max = int(x + self.w),int(y + self.h)
         stack = self.image_stack
+        
+        ## Confirm frame ranges
+        self.check_variable_formats()
+        if self.blank_0 < self.crop_0:
+            self.blank_0 = self.crop_0
+        if self.blank_n > self.crop_n:
+            self.blank_n = self.crop_n
         
         if grayscale:
             if self.debug: print('detector.step_1 cropped and grayscale: grayscale image')
