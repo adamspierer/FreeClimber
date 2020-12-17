@@ -791,10 +791,13 @@ def startup():
     ----
     Returns:
       args (list): list of arguments passed to program
-    '''
-    line_length = 72
+    '''    
+    ## Lines to print
+    line0 = '#'*line_length
     line1 = '## FreeClimber v.%s ' % str(version)
-    line2 = "## Beginning program @ %s " % str(now)
+    line2 = '## Please cite: %s' % doi
+    line3 = "## Beginning program @ %s " % str(now)
+    line4 = line0
 
     print('\n')
     print('#' * line_length)
