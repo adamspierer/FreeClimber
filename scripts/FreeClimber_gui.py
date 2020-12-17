@@ -8,6 +8,7 @@
 
 ## Version number
 version = '0.3.2'
+doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper
 
 ## More universal modules
 import wx
@@ -791,19 +792,27 @@ def startup():
     ----
     Returns:
       args (list): list of arguments passed to program
-    '''    
-    ## Lines to print
+    '''
+    def print_line(line,line_length):
+        '''Formats line to print'''
+        if len(line) <= line_length: string = line + '#'*(line_length-len(line))
+        else: string = line
+        print(string)
+        return
+
+    line_length = 72
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     line0 = '#'*line_length
     line1 = '## FreeClimber v.%s ' % str(version)
-    line2 = '## Please cite: %s' % doi
+    line2 = '## Please cite: %s ' % doi
     line3 = "## Beginning program @ %s " % str(now)
     line4 = line0
 
+    ## Printing formated lines
     print('\n')
-    print('#' * line_length)
-    print(line1 + '#'*(line_length-len(line1)))
-    print(line2 + '#'*(line_length-len(line2)))
-    print('#' * line_length)
+    for item in range(5):
+        print_line(eval('line'+str(item)),line_length)
 
     args = define_argument_parser()
     return args
