@@ -9,7 +9,7 @@
 
 ## Version number
 version='0.3.2'
-doi =  '<link to dissertation>' ## Link to published paper or dissertation
+doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper or dissertation
 
 ## Importing external package(s)
 import os
@@ -494,14 +494,13 @@ if __name__ == '__main__':
 ## Additional functionality to add in for later releases
     
 ## Insert 1
-    fc.check_variables() # Not ready for this release
+#    fc.check_variables() # Not ready for this release
 #
-    def check_variables(self):
-    
-        ## Making sure diameter is an odd number
-        if int(self.diameter) % 2 == False:
-            self.diameter = int(self.diameter) + 1
-            
-        ## Should probably check other variables at some point...
-        
-        return
+#     def check_variables(self):
+#     
+#         ## Making sure diameter is an odd number
+#         if int(self.diameter) % 2 == False:
+#             self.diameter = int(self.diameter) + 1
+#             
+#         ## Check other variables...
+#         return
