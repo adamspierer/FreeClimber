@@ -822,6 +822,7 @@ class detector(object):
         
         ## Iterating through the window
         for i in range(len(self.image_stack) - self.window):
+            print(i)
             ## Defining search parameters for each iteration
             start, stop = int(i),int(i+self.window)
             df_window  = df[(df.frame >= start) & (df.frame <= stop)]
@@ -876,22 +877,18 @@ class detector(object):
         x_max, y_max = int(x + self.w),int(y + self.h)
         stack = self.image_stack
         
-        if grayscale:
-            if self.debug: print('detector.step_1 cropped and grayscale: grayscale image')
-            self.clean_stack = self.crop_and_grayscale(stack,
-                         y=y, y_max=y_max,
-                         x=x, x_max=x_max,
-                         first_frame=self.crop_0, last_frame=self.crop_n)
-        else:
-            if self.debug: print('detector.step_1 cropped and grayscale: no color image')
-            self.clean_stack = self.crop_and_grayscale(stack,
-                         y=y, y_max=y_max,
-                         x=x, x_max=x_max,
-                         first_frame=self.crop_0, last_frame=self.crop_n, grayscale=False)                        
+        if self.debug: print('detector.step_1 cropped and grayscale: grayscale image: ' % grayscale)
+        self.clean_stack = self.crop_and_grayscale(stack,
+                     y=y, y_max=y_max,
+                     x=x, x_max=x_max,
+                     first_frame=self.crop_0, 
+                     last_frame=self.crop_n,
+                     grayscale=grayscale)
+
         if self.debug: print('detector.step_1 cropped and grayscale dimensions: ', self.clean_stack.shape)
 
         ## Subtracts background to generate null background image and spot stack
-        self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack)
+        self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack, first_frame=self.blank_0, last_frame=self.blank_n)
         if self.debug: print('detector.step_1 spot_stack and null background created')
         return
 
