@@ -20,6 +20,10 @@ This program was designed initially for assessing climbing performance in a *Dro
 
 <h3>Requirements</h3>
 
+General programs:
+	- FFmpeg        [4.3.1 ]
+
+Python modules:
     - argparse      [1.1   ]
     - ffmpeg-python [0.2.0 ]
     - matplotlib    [3.1.3 ]
@@ -173,7 +177,10 @@ Contributors can fork from the repository and submit a pull request when modific
 We plan to release maintenance updates as needed, though we are unlikely to modify the platform's main functionality.
 
 <h3>Citing this work</h3>
-The manuscript associated with this platform is in the end stages of revision or in the review process. Please contact the authors directly for how to cite this work.
+If you use FreeClimber in your work, please cite:
+> A.N. Spierer, D. Yoon, CT. Zhu, and DM. Rand. (2020) FreeClimber: Automated 
+> quantification of climbing performance in <i>Drosophila</i>. <i>Journal of</i>
+> <i>Experimental Biology</i>. DOI: 10.1242/jeb.229377
 
 <h3>License</h3>
 
