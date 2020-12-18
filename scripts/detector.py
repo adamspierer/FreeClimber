@@ -154,7 +154,6 @@ class detector(object):
             print('\n\nExiting program. Invalid path to video file: ',video_file)
             raise SystemExit
 
-
     ## Specifying variables
     def specify_paths_details(self,video_file):
         '''Takes in the video file and other imported variables and parses them as needed.
@@ -215,6 +214,13 @@ class detector(object):
         if self.frame_rate <= 0:
             print('!! Issue with frame_rate: was %s, now 1' %(self.frame_rate))
             self.frame_rate = 1
+        
+        ## Background blank cannot be greater than the frame 
+        if self.blank_0 < self.crop_0:
+            self.blank_0 = self.crop_0
+        
+        if self.blank_n > self.crop_n:
+            self.blank_n = self.crop_n
         return
 
     ## Video processing functions
@@ -281,8 +287,8 @@ class detector(object):
         if self.debug: print('detector.crop_and_grayscale')
     
         ## Conditionals for cropping frames and video length
-        if first_frame == None: first_frame = 0
-        if last_frame == None: last_frame = video_array.shape[0]
+        if first_frame == None: first_frame = self.crop_0
+        if last_frame == None: last_frame = self.crop_n
         if y_max == None: y_max = video_array.shape[2]
         if x_max == None: x_max = video_array.shape[1]
         if self.debug: print('detector.crop_and_grayscale: Cropping from frame %s to %s' % (first_frame,last_frame))
@@ -317,8 +323,11 @@ class detector(object):
         if self.debug: print('detector.subtract_background')
         
         ## Setting the last frame to the end if None provided
-        if last_frame == None: 
-            last_frame = self.n_frames
+        first_frame = self.blank_0
+        last_frame = self.blank_n
+        
+#         if last_frame == None: 
+#             last_frame = self.n_frames
             
         ## Generating a null background image as the median pixel intensity across frames
         background = np.median(video_array[first_frame:last_frame,:,:].astype(float), axis=0).astype(int)
@@ -432,7 +441,6 @@ class detector(object):
 
         plt.tight_layout()
         return
-
 
     def image_metrics(self, spots, image, metric, colorbar=False, **kwargs):
         '''Creates a plot with spot metrics placed over the video image
@@ -560,7 +568,6 @@ class detector(object):
         plt.tight_layout()
         return
 
-
     def find_spots(self, stack, diameter = 3, quiet=True,**kwargs):
         '''Locates the x,y-coordinates for all spots across frames
         ----
@@ -587,8 +594,7 @@ class detector(object):
         ## Sorting DataFrame
         spots = spots[spots.raw_mass > 0].sort_values(by='frame')
         return spots
-        
-        
+                
     def particle_finder(self, invert=True, **kwargs):
         '''Finds spots and formats the resulting DataFrame. Output can be used with TrackPy.
         ----
@@ -821,8 +827,8 @@ class detector(object):
         _count_all = np.median(df.groupby('frame').frame.count())
         
         ## Iterating through the window
-        for i in range(len(self.image_stack) - self.window):
-            print(i)
+        frames = (self.crop_n - self.crop_0) - self.window
+        for i in range(frames):
             ## Defining search parameters for each iteration
             start, stop = int(i),int(i+self.window)
             df_window  = df[(df.frame >= start) & (df.frame <= stop)]
@@ -877,7 +883,7 @@ class detector(object):
         x_max, y_max = int(x + self.w),int(y + self.h)
         stack = self.image_stack
         
-        if self.debug: print('detector.step_1 cropped and grayscale: grayscale image: ' % grayscale)
+        if self.debug: print('detector.step_1 cropped and grayscale: grayscale image:', grayscale)
         self.clean_stack = self.crop_and_grayscale(stack,
                      y=y, y_max=y_max,
                      x=x, x_max=x_max,
@@ -889,6 +895,7 @@ class detector(object):
 
         ## Subtracts background to generate null background image and spot stack
         self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack, first_frame=self.blank_0, last_frame=self.blank_n)
+        print("self.spot_stack:", self.spot_stack.shape)
         if self.debug: print('detector.step_1 spot_stack and null background created')
         return
 
@@ -1066,7 +1073,7 @@ class detector(object):
         if self.debug: print('-- [ step 6b ] Plotting data: Re-running local linear regression on all')
         _result = self.local_linear_regression(self.df_filtered)
         begin = _result.iloc[0].first_frame.astype(int)
-        end = begin + self.window
+        end = _result.iloc[0].last_frame.astype(int)
         
         ## For future release
 #         min_R = _result.iloc[0].r_value ##
