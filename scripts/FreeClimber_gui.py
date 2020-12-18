@@ -279,7 +279,6 @@ class main_gui(wx.Frame):
             self.button_browse_video.Enable(True)
             return False
 
-
     ## Commands for drawing the ROI rectangle
     def ChangeCursor(self, event):
         '''Change cursor into crosshair type when enter the plot area'''
@@ -460,7 +459,6 @@ class main_gui(wx.Frame):
             self.load_video()
         self.figure.clear()
         return
-
 
     def OnButton_LoadVideo(self,event):
         '''Calls function to load the video when the `reload` button is pressed'''
