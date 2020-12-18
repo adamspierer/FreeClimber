@@ -822,7 +822,7 @@ class detector(object):
 
         ## Defining empty variables
         result_list, result = [],pd.DataFrame()
-        llr_columns = ['first_frame','last_frame','slope','intercept','r','pval','err','count_llr','count_all']
+        llr_columns = ['first_frame','last_frame','slope','intercept','r','pval','err']#,'count_llr','count_all']
         
         _count_all = np.median(df.groupby('frame').frame.count())
         
@@ -848,13 +848,14 @@ class detector(object):
 
                 ## Performing linear regression on subset and formatting output to list
                 _result = linregress(_frame,_pos)
-                _result = [start,stop] + np.hstack(_result).tolist() + [_count_llr,_count_all]
+                _result = [start,stop] + np.hstack(_result).tolist() #+ [_count_llr,_count_all]
 
                 ## If slope is not significantly different from 0, then set slope = 0
                 if _result[-2] >= 0.05: _result[2] = 0
 
             ## Have row of NaN if unable to process
-            except: _result = [start,stop] + [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan]
+            except: _result = [start,stop] + [np.nan,np.nan,np.nan,np.nan]
+#             except: _result = [start,stop] + [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan]
 
             ## Add results list to a list of lists
             result_list.append(_result)
@@ -1115,7 +1116,7 @@ class detector(object):
     def step_7(self):
         '''Writing the video's slope file'''
         print('-- [ step 7  ] Setting up slopes file')
-        slope_columns = ['vial_ID','first_frame','last_frame','slope','intercept','r_value','p_value','std_err','count_llr','count_all']
+        slope_columns = ['vial_ID','first_frame','last_frame','slope','intercept','r_value','p_value','std_err']#,'count_llr','count_all']
         
         ## Converting dictionary of local linear regressions into a DataFrame
         self.df_slopes = pd.DataFrame.from_dict(self.result,orient='index',columns = slope_columns)
