@@ -164,8 +164,9 @@ Specify a file path to a configuration file after the `--config_file` flag.
 
 We encourage you to to visit our [Tutorial page]('https://github.com/adamspierer/FreeClimber/blob/master/TUTORIAL.md') for a more thorough walk-through, description, and various caveats.
 
-<h3>Version history</h3>
+<h3>Version releases</h3>
 0.4.0 - Fixed error with frame cropping and added additional variable compatibility checks.
+
 0.3.2 - Release version for Journal of Experimental Biology
 
 <h3>Deployment</h3>
