@@ -3,7 +3,7 @@
 
 ## File name : detector.py
 ## Created by: Adam N. Spierer
-## Date      : October 2020
+## Date      : December 2020
 ## Purpose   : Script contains main functions used in FreeClimber package, as well as added functionality
 
 version = '0.4.0'
@@ -327,10 +327,7 @@ class detector(object):
         ## Setting the last frame to the end if None provided
         first_frame = self.blank_0
         last_frame = self.blank_n
-        
-#         if last_frame == None: 
-#             last_frame = self.n_frames
-            
+                    
         ## Generating a null background image as the median pixel intensity across frames
         background = np.median(video_array[first_frame:last_frame,:,:].astype(float), axis=0).astype(int)
         if self.debug: print('detector.subtract_background: dimensions:', background.shape)
