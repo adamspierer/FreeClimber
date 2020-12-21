@@ -216,6 +216,7 @@ class detector(object):
             print('!! Issue with frame_rate: was %s, now 1' %(self.frame_rate))
             self.frame_rate = 1
         
+<<<<<<< HEAD
         ## Background blank cannot be greater than the frame 
         if self.blank_0 < self.crop_0:
             self.blank_0 = self.crop_0
@@ -223,6 +224,29 @@ class detector(object):
         if self.blank_n > self.crop_n:
             self.blank_n = self.crop_n
 
+=======
+        ## Window size vs. frames to test
+        if (self.crop_n - self.crop_0) > self.window:
+            print('!! Issue with window size (%s) being less than frames. Window size set to 80 percent of desired frames' %(self.window))
+            self.window = (self.crop_n - self.crop_0) * 0.8
+		
+		## blank vs. crop frames
+        if self.blank_0 < self.crop_0:
+            print('!! Issue with blank frames vs. crop frames. Setting blank_0 (%s) = crop_n (%s)' % (self.blank_0,self.crop_0))
+            self.blank_0 = self.crop_0
+        if self.blank_n > self.crop_n:
+            print('!! Issue with blank frames vs. crop frames. Setting blank_n (%s) = crop_n (%s)' % (self.blank_n,self.crop_n))
+            self.blank_n = self.crop_n
+        
+        ## Check frame is still valid
+        if self.check_frame < self.crop_0:
+            print('!! Issue with check_frame < crop_0 (min. cropped frame). Now, check_frame = crop_0 = %s' %self.check_frame)
+            self.check_frame = self.crop_0
+        if self.check_frame > self.crop_n:
+            print('!! Issue with check_frame > crop_n (max cropped frame). Now, check_frame = crop_n = %s' %self.check_frame)
+            self.check_frame = self.crop_n
+        print("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+>>>>>>> master
         return
 
     ## Video processing functions
@@ -883,6 +907,7 @@ class detector(object):
         x_max, y_max = int(x + self.w),int(y + self.h)
         stack = self.image_stack
         
+<<<<<<< HEAD
         if self.debug: print('detector.step_1 cropped and grayscale: grayscale image:', grayscale)
         self.clean_stack = self.crop_and_grayscale(stack,
                      y=y, y_max=y_max,
@@ -891,6 +916,27 @@ class detector(object):
                      last_frame=self.crop_n,
                      grayscale=grayscale)
 
+=======
+        ## Confirm frame ranges
+        self.check_variable_formats()
+        if self.blank_0 < self.crop_0:
+            self.blank_0 = self.crop_0
+        if self.blank_n > self.crop_n:
+            self.blank_n = self.crop_n
+        
+        if grayscale:
+            if self.debug: print('detector.step_1 cropped and grayscale: grayscale image')
+            self.clean_stack = self.crop_and_grayscale(stack,
+                         y=y, y_max=y_max,
+                         x=x, x_max=x_max,
+                         first_frame=self.crop_0, last_frame=self.crop_n)
+        else:
+            if self.debug: print('detector.step_1 cropped and grayscale: no color image')
+            self.clean_stack = self.crop_and_grayscale(stack,
+                         y=y, y_max=y_max,
+                         x=x, x_max=x_max,
+                         first_frame=self.crop_0, last_frame=self.crop_n, grayscale=False)                        
+>>>>>>> master
         if self.debug: print('detector.step_1 cropped and grayscale dimensions: ', self.clean_stack.shape)
 
         ## Subtracts background to generate null background image and spot stack
