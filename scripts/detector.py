@@ -192,6 +192,7 @@ class detector(object):
         self.experiment_details[-1] = '.'.join(self.experiment_details[-1].split('.')[:-1])
         self.vial_ID = self.experiment_details[:self.vial_id_vars]
         
+        ## Creating a list of colors for plotting
         self.color_list = [self.vial_color_map(i) for i in np.linspace(0,1,self.vials)]
         return
 
@@ -221,6 +222,7 @@ class detector(object):
         
         if self.blank_n > self.crop_n:
             self.blank_n = self.crop_n
+
         return
 
     ## Video processing functions
@@ -309,7 +311,7 @@ class detector(object):
         return clean_stack
     
     ## Subtract background
-    def subtract_background(self,video_array=None,first_frame=0,last_frame=None):
+    def subtract_background(self,video_array=None):
         '''Generate a null background image and subtract that from each frame
         ----
         Inputs:
@@ -707,7 +709,7 @@ class detector(object):
                 ## Name vial_ID
                 vial_ID = ['_'.join(self.vial_ID) + '_'+ str(v)]
                 self.result[i] = vial_ID + self.result[i]
-            
+                
                 ## Rounding results so they are more manageable and require less space.
                 self.result[i][1:3] = [int(item) for item in self.result[i][1:3]]
                 self.result[i][3:] = [round(item,4) for item in self.result[i][3:]]
@@ -895,8 +897,7 @@ class detector(object):
         if self.debug: print('detector.step_1 cropped and grayscale dimensions: ', self.clean_stack.shape)
 
         ## Subtracts background to generate null background image and spot stack
-        self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack, first_frame=self.blank_0, last_frame=self.blank_n)
-        print("self.spot_stack:", self.spot_stack.shape)
+        self.spot_stack,self.background = self.subtract_background(video_array=self.clean_stack)
         if self.debug: print('detector.step_1 spot_stack and null background created')
         return
 
@@ -992,7 +993,7 @@ class detector(object):
         ## Assigning spots to vials, 0 if False AND outside of the True point range
         print('-- [ Step 4e ]   - Assigning spots to vials')
         self.bin_lines, self.df_big.loc[self.df_big['True_particle'],'vial'] = self.bin_vials(self.df_big[self.df_big.True_particle],vials = self.vials)
-
+        
         ########################################
         ## Beginning of publication insert
         if publication:
@@ -1027,12 +1028,16 @@ class detector(object):
         ## Adding experimental details to DataFrame
         self.specify_paths_details(self.video_file)
        
+       ## Filling in experimental details to DataFrame
         for item in self.file_details.keys():
             self.df_filtered[item] = np.repeat(self.file_details[item],self.df_filtered.shape[0])        
         
         ## Invert y-axis -- images indexed upper left to lower right but converting because plots got left left to upper right
         self.df_filtered['y'] = self.invert_y(self.df_filtered)
         self.df_filtered['y'] = self.df_filtered.y.round(2)
+        
+        ## Convert vial assignments from float to int
+        self.df_filtered['vial'] = self.df_filtered['vial'].astype('int')
 
         ## Save the filtered DataFrame
         path_filtered = self.name_nosuffix+'.filtered.csv'
@@ -1050,6 +1055,13 @@ class detector(object):
         Returns:
           None'''
         print('-- [ step 6a ] Visualize spot metrics ::',gui)
+        
+        ## Check window size is not greater than video length
+        video_length = self.crop_n - self.crop_0
+        if self.window > video_length:
+            print('!! Issue with window size > video length: was %s, now %s' % (self.window, video_length-1))
+            self.window = video_length - 1
+            
         if gui:        
 
             ## Visualizes the region of interest
@@ -1128,6 +1140,7 @@ class detector(object):
         for item in self.file_details.keys():
             self.df_slopes[item] = np.repeat(self.file_details[item],self.df_slopes.shape[0])
 
+        ## Specifying column names
         slope_columns = [item for item in self.file_details.keys()] + slope_columns
         self.df_slopes = self.df_slopes[slope_columns]
     
