@@ -7,7 +7,7 @@
 ## Purpose   : Graphical User Interface wrapper for FreeClimber
 
 ## Version number
-version = '0.3.2'
+version = '0.4.0'
 doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper
 
 ## More universal modules

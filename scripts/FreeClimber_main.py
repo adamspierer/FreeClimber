@@ -8,8 +8,8 @@
 
 
 ## Version number
-version='0.3.2'
-doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper or dissertation
+version='0.4.0'
+doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper
 
 ## Importing external package(s)
 import os
