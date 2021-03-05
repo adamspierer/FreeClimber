@@ -216,6 +216,7 @@ class detector(object):
             print('!! Issue with frame_rate: was %s, now 1' %(self.frame_rate))
             self.frame_rate = 1
         
+<<<<<<< HEAD
         ## Background blank cannot be greater than the frame 
         if self.blank_0 < self.crop_0:
             self.blank_0 = self.crop_0
@@ -223,6 +224,7 @@ class detector(object):
         if self.blank_n > self.crop_n:
             self.blank_n = self.crop_n
 
+=======
         ## Window size vs. frames to test
         if (self.crop_n - self.crop_0) > self.window:
             print('!! Issue with window size (%s) being less than frames. Window size set to 80 percent of desired frames' %(self.window))
@@ -244,6 +246,7 @@ class detector(object):
             print('!! Issue with check_frame > crop_n (max cropped frame). Now, check_frame = crop_n = %s' %self.check_frame)
             self.check_frame = self.crop_n
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+>>>>>>> master
         return
 
     ## Video processing functions
