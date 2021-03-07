@@ -436,7 +436,7 @@ class main_gui(wx.Frame):
         
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open(self.path_parameters,'a') as f:
-            print('## Generated from file:'+self.video_file,file = f)
+            print('## Generated from file: '+self.video_file,file = f)
             print('##     @ ' + now, file = f)
             print('##',file = f)
             print('## Analysis parameters:',file = f)
