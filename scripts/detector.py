@@ -225,7 +225,7 @@ class detector(object):
 
         ## Window size vs. frames to test
         if (self.crop_n - self.crop_0) < self.window:
-            print('!! Issue with window size (%s) being greater than frames (%s). Window size set to 80 percent of desired frames (%s)' %(self.window,self.crop_n - self.crop_0,(.8 * (self.crop_n - self.crop_0))))
+#             print('!! Issue with window size (%s) being greater than frames (%s). Window size set to 80 percent of desired frames (%s)' %(self.window,self.crop_n - self.crop_0,(.8 * (self.crop_n - self.crop_0))))
             self.window = (self.crop_n - self.crop_0) * 0.8
 		
 		## blank vs. crop frames
@@ -238,10 +238,10 @@ class detector(object):
         
         ## Check frame is still valid
         if self.check_frame < self.crop_0:
-            print('!! Issue with check_frame < crop_0 (min. cropped frame). Now, check_frame = crop_0 = %s' %self.check_frame)
+#             print('!! Issue with check_frame < crop_0 (min. cropped frame). Now, check_frame = crop_0 = %s' %self.check_frame)
             self.check_frame = self.crop_0
         if self.check_frame > self.crop_n:
-            print('!! Issue with check_frame > crop_n (max cropped frame). Now, check_frame = crop_n = %s' %self.check_frame)
+#             print('!! Issue with check_frame > crop_n (max cropped frame). Now, check_frame = crop_n = %s' %self.check_frame)
             self.check_frame = self.crop_n
         return
 
