@@ -263,7 +263,7 @@ class detector(object):
             try:
                 probe = ffmpeg.probe(file)
             except:
-                print('!! Could not read %s into FreeClimber. Likely due to unacceptable video file or FFmpeg not installed')
+                print('!! Could not read %s into FreeClimber. Likely due to unacceptable video file or FFmpeg not installed' % file)
                 raise SystemExit
             video_info = next(x for x in probe['streams'] if x['codec_type'] == 'video')
             self.width = int(video_info['width'])
