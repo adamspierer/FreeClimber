@@ -21,9 +21,11 @@ This program was designed initially for assessing climbing performance in a *Dro
 <h3>Requirements</h3>
 
 General programs:
-	- FFmpeg        [4.3.1 ]
+
+    - FFmpeg        [4.3.1 ]
 
 Python modules:
+
     - argparse      [1.1   ]
     - ffmpeg-python [0.2.0 ]
     - matplotlib    [3.1.3 ]
