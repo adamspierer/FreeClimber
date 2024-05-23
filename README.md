@@ -24,6 +24,8 @@ General programs:
 
     - FFmpeg        [4.3.1 ]
 
+FFmpeg will also need to be installed using the following [Windows Guide](https://www.wikihow.com/Install-FFmpeg-on-Windows).
+
 Python modules:
 
     - argparse      [1.1   ]

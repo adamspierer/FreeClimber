@@ -178,6 +178,7 @@ class detector(object):
             var_name = 'self.path_'+item
             file_path = ''.join([self.name_nosuffix,jtem])
             if self.debug: print('detector.specify_paths_details: ' + var_name+"='"+file_path+"'")
+            file_path = file_path.replace("\\", "\\\\")
             exec(var_name+"='"+file_path+"'")
 
         ## Project folder specific paths
