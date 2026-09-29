@@ -123,7 +123,7 @@ Here, we measured three vials at 110, 114, 111 pixels (average = 111.7 pixels/vi
 
 <img src="https://github.com/adamspierer/FreeClimber/raw/master/z/2b-pixel_to_cm_calculation.png" width="223" height="200">
 
-**Frames / sec** - The default frame rate is 25, but may not be the actual frame rate. If you are unsure of the recording device's frame rate, record a video over a fixed time, load that video, and divide the second field in the `Background Frames` (number of frames) by the recording time to get the frame rate.
+**Frames / sec** - Filled in from the video file's own frame rate when the video loads. Check it: a wrong frame rate skews every velocity. If the value looks wrong, record a video over a fixed time, load that video, and divide the second field in the `Background Frames` (number of frames) by the recording time to get the frame rate.
 
 If you decide to do these steps, make sure to click the `Convert to cm / sec` box so final slopes are converted to `cm / second`. Otherwise, the resulting slopes will be in `pixels / frame`.
 
@@ -198,11 +198,29 @@ Experimental details that do not change over the course of the experiment (e.g. 
 
 **Project path** - The parent folder to search through for all video files of a given type (same video file type as the video file loaded). The generated configuration (`.cfg`) file and final `results.csv` file containing all slopes from all videos will eventually be saved to this folder.
 
+<h3>Step 6 - Trajectory analysis</h3>
+
+**Individual mode** links detections into per-fly tracks, and **Tortuosity / meandering metrics** computes per-fly path metrics (ticking it also turns on individual mode). See the README.
+
+<h3>Step 7 - Failure to climb</h3>
+
+A fly that never gets higher than a line above the vial floor within a time limit *failed to climb*, a separate outcome from a failed negative geotaxis (FNG) fall. See the README section "Failure to climb (FTC)".
+
+**Line (cm)** - Height of the line above the vial floor. Leave blank to use the top of the drawn ROI box (one spot diameter below the top edge, since flies centred on the edge cannot be detected), so draw the ROI with its top edge at your finish line. A fly that climbs partway and then falls is counted as a fall (FNG), not a failure to climb.
+
+**Within (s)** - Time limit in seconds from the start of the cropped video. Leave blank to use the whole cropped video.
+
+**Flies / vial** - How many flies were loaded into each vial: one number, or a comma-separated list left to right (e.g. `10,10,9`). With this, flies the detector cannot see (for example motionless flies lost to background subtraction) still count as failures. A `vials.txt` `n =` line overrides it per folder.
+
+**Vial floor y (px)** - The image y-coordinate of the vial floor, read off the axes of the video frame. Heights are measured from here. Leave blank to use the bottom edge of the ROI. The ROI bottom edge should sit at or just below the floor.
+
+After *Test parameters*, the check-frame panel shows the floor as a cyan line and the failure-to-climb line as a magenta dashed line.
+
 <h3>Buttons</h3>
 
 When all the appropriate fields are set, we can process the video.
 
-**Test parameters** - This button begins a full analysis of the loaded video and plots out several diagnostic plots. On the top row (top row, left to right) the median background image, `Check frame` frame number with candidate (blue +; none here) and true (colored circles) spots, and the mean vertical-position vs. time plots (darker segments indicate most linear section). On the bottom row (left to right), there are plots for the distribution of spots' mass (line =  `minmass` value), distribution of spot signals (line = signal `threshold` value), and number of spots counted per frame (for entire video). 
+**Test parameters** - This button begins a full analysis of the loaded video and plots out several diagnostic plots. On the top row (top row, left to right) the median background image, `Check frame` frame number with candidate (blue +; none here) and true (colored circles) spots plus the vial floor and failure-to-climb line, and the mean vertical-position vs. time plots (darker segments indicate most linear section). If the test fails (for example no spots survive filtering), the reason is shown in a message box and the status bar. On the bottom row (left to right), there are plots for the distribution of spots' mass (line =  `minmass` value), distribution of spot signals (line = signal `threshold` value), and number of spots counted per frame (for entire video). 
 
 To make adjustments, modify the appropriate field(s) and `Test parameters`, or select a new video from `Browse...`. If the program freezes due to poor spot quality, press the `Reload video` button.
 
@@ -274,6 +292,8 @@ The remaining three videos represent how an improvised rig might perform, in ord
 
 - The `<file_name.raw.csv>` output is also really useful for passing to `trackpy` for linking spots together into tracks. Read more on TrackPy particle __tracking__ [API](http://soft-matter.github.io/trackpy/v0.4.2/api.html). Briefly, the file can be loaded in and saved as `f`, which will seamlessly integrate into the `Step 3: Link features into particle trajectories` in the [TrackPy Walkthrough](http://soft-matter.github.io/trackpy/v0.4.2/tutorial/walkthrough.html).
 
+- FreeClimber-FNG can do this linking step automatically. When `analysis_mode='individual'` is set in the configuration (`.cfg`) file, the program links per-frame detections into per-fly trajectories and writes an additional `<file_name.tracks.csv>` output alongside `<file_name.filtered.csv>`. This file contains a `particle` column (the per-fly track ID) plus `frame, t, vial, x, y` and the naming-convention fields. Linking uses TrackPy's predictive linker; see the [TrackPy prediction tutorial](http://soft-matter.github.io/trackpy/v0.4.2/tutorial/prediction.html) for background on `NearestVelocityPredict`. When `analysis_mode` is unset or `'cohort'`, no `<file_name.tracks.csv>` is produced and output is unchanged.
+
 <h4>Table of variables</h4>
 
 |Variable name |	Data type |	Explanation|
@@ -305,5 +325,13 @@ The remaining three videos represent how an improvised rig might perform, in ord
 |file\_suffix |	String |	Suffix of videos being processed|
 |convert\_to\_cm\_sec |	Boolean | True if converting output slope to centimeters per second|
 |trim\_outliers |	Boolean | True if trimming outliers|
+|floor\_y | Integer | Vial floor in pixels from the top of the ROI (default: ROI bottom)|
+|background\_image | String | Optional image of the empty vials used as the background|
+|flies\_per\_vial | Integer or list | Flies loaded per vial, for failure to climb|
+|ftc\_height\_cm | Float | Failure-to-climb line above the floor, in cm (None = top of the ROI box)|
+|ftc\_window\_sec | Float | Failure-to-climb time limit in seconds (None = whole cropped video)|
+|fng\_min\_range\_cm | Float | Smallest height range an FNG trace is rescaled by (see README)|
+
+See the README for the full list of FNG, failure-to-climb, linking and tortuosity keys.
 
 \* - Can be either an integer or float

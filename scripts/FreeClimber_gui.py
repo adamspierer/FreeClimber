@@ -7,16 +7,21 @@
 ## Purpose   : Graphical User Interface wrapper for FreeClimber
 
 ## Version number
-version = '0.4.0'
+version = '1.0.4'
 doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper
 
 ## More universal modules
+import gc
 import wx
 import os
 import sys
 import time
 import argparse
+import traceback
 import matplotlib
+## Select the wx backend before pyplot is imported (anywhere, including by
+## detector_fng) so pyplot does not bind to a different backend first.
+matplotlib.use('WXAgg')
 import numpy as np
 import pandas as pd
 from datetime import datetime
@@ -27,10 +32,9 @@ from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 import matplotlib.cm as cm
 import matplotlib.pyplot as plt
-matplotlib.use('WXAgg')
 
 ## Local imports
-from detector import detector
+from detector_fng import detector
 
 
 ## Set up wxPython application window
@@ -119,7 +123,7 @@ class main_gui(wx.Frame):
         ## Enable all buttons
         button_list = ['browse_video','reload_video','test_parameters','store_parameters']
         for button in button_list:
-            exec('self.button_' + button + '.Enable(True)')
+            getattr(self, 'button_' + button).Enable(True)
 
         ## Load video
         self.load_video()
@@ -140,19 +144,23 @@ class main_gui(wx.Frame):
             if args.debug: print('    '+phrase)
             variables.append(phrase)
 
-        ## Including strings - type I
+        ## Including strings - type I. Paths are written with forward slashes:
+        ## the batch runner reads them back fine on Windows, and hand-edited
+        ## copies of the .cfg stay free of backslash escapes.
         for item,jtem in zip(self.input_names[22:24],self.input_values[22:24]):
 #             print('str-I',item,jtem)
-            phrase = str(item + '="'+ jtem.GetValue()+'"')
+            value = jtem.GetValue()
+            if item == 'path_project': value = value.replace('\\', '/')
+            phrase = str(item + '="'+ value +'"')
             if args.debug: print('    '+phrase)
             variables.append(phrase)
 
-        ## Including strings - type II
-        for item,jtem in zip(self.input_names[24:25],self.input_values[24:25]):
-#             print('str-II',item,jtem)
-            phrase = str(item + '="'+ str(jtem)+'"')
-            if args.debug: print(phrase)
-            variables.append(phrase)
+        ## Including strings - type II. file_suffix is read from the current
+        ## video name each time (input_values holds a copy made at start-up,
+        ## which went stale after browsing to a video with another extension).
+        phrase = 'file_suffix="%s"' % self.input_file_suffix
+        if args.debug: print(phrase)
+        variables.append(phrase)
         
         ## Including booleans
         for item,jtem in zip(self.input_names[25:],self.input_values[25:]):
@@ -161,7 +169,74 @@ class main_gui(wx.Frame):
             if args.debug: print('    '+phrase)
             variables.append(phrase)
 
+        ## Step 6: per-fly trajectory analysis (linking + tortuosity/meandering).
+        ## Appended here (not via the index-sliced input_names/input_values lists)
+        ## so the fixed slicing above is left untouched. Tortuosity is gated on
+        ## individual mode in step_5, so checking it implies individual mode.
+        tortuosity = self.input_tortuosity_enabled.GetValue()
+        individual = self.input_analysis_individual.GetValue() or tortuosity
+        variables.append("analysis_mode=%s" % ("'individual'" if individual else "'cohort'"))
+        variables.append('tortuosity_enabled=%s' % str(tortuosity))
+        ## Linking + tortuosity numeric parameters (documented defaults; fine-tune
+        ## in the saved .cfg if needed). Written whenever the config is saved.
+        variables.append('link_search_range=15')
+        variables.append('link_memory=3')
+        variables.append("link_predictor='nearest_velocity'")
+        variables.append('link_min_track_length=5')
+        variables.append('tortuosity_smoothing_window=5')
+        variables.append('tortuosity_velocity_threshold=1.0')
+        variables.append('tortuosity_bout_min_frames=10')
+        variables.append('tortuosity_bout_min_displacement=2.0')
+        if args.debug:
+            print('    analysis_mode individual=%s, tortuosity_enabled=%s' % (individual, tortuosity))
+
+        ## FNG detection parameters (documented defaults; fine-tune in the .cfg)
+        variables.append('fng_enabled=True')
+        variables.append('fng_smooth_window=5')
+        variables.append('fng_climb_thresh=0.10')
+        variables.append('fng_fall_thresh=0.10')
+        variables.append('fng_min_gap=5')
+        variables.append('fng_min_range_cm=2.0')
+
+        ## Failure to climb (Step 7 row) and the vial floor
+        variables.append('ftc_enabled=True')
+        ## Blank line height -> None -> the line is the top of the drawn ROI box
+        variables.append('ftc_height_cm=%s' % self._number_or_none(self.input_ftc_height_cm))
+        variables.append('ftc_window_sec=%s' % self._number_or_none(self.input_ftc_window_sec))
+        variables.append('ftc_eval_frames=5')
+        variables.append('ftc_min_coverage=0.8')
+        variables.append('flies_per_vial=%s' % self._flies_per_vial())
+        floor = self._number_or_none(self.input_floor_y)
+        if floor is not None:
+            ## Entered in full-image pixels (as read off the video axes);
+            ## the detector wants pixels from the top of the ROI.
+            try: floor = floor - int(self.input_y.GetValue())
+            except ValueError: pass
+        variables.append('floor_y=%s' % floor)
         return variables
+
+    @staticmethod
+    def _number_or_none(control, default=None):
+        '''Numeric value of a text box, or default when blank/invalid.'''
+        text = control.GetValue().strip()
+        if text == '':
+            return default
+        try:
+            value = float(text)
+        except ValueError:
+            return default
+        return int(value) if value.is_integer() else value
+
+    def _flies_per_vial(self):
+        '''Flies loaded per vial: blank -> None, '10' -> 10, '10,10,9' -> [10, 10, 9].'''
+        tokens = [t.strip() for t in self.input_flies_per_vial.GetValue().split(',') if t.strip()]
+        try:
+            counts = [int(t) for t in tokens]
+        except ValueError:
+            return None
+        if not counts:
+            return None
+        return counts[0] if len(counts) == 1 else counts
 
     def load_video(self):
         '''Function for loading the video when the respective button is pressed'''
@@ -183,53 +258,67 @@ class main_gui(wx.Frame):
             self.checkBox_fixed_ROI.Enable(True)
             self.input_convert_to_cm_sec.Enable(True)
 
-            ## Busy cursor while the detector object is called and initialized
+            ## Busy cursor while the detector object is called and initialized.
+            ## A video that cannot be read raises SystemExit in the detector;
+            ## report it instead of letting it close the GUI.
             wx.BeginBusyCursor()
             try:
                 vars = self.update_variables()
                 self.detector = detector(self.video_file,
                                         gui=True,
                                         variables = vars)
-            
+
                 self.axes[0].imshow(self.detector.image_stack[0])
                 self.figure.canvas.draw()
+            except (Exception, SystemExit) as e:
+                self.detector = None
+                self.report_error('Could not load the video', e)
+                return
             finally:
                 wx.EndBusyCursor()
-            
-            ## Setting mechanism for drawing the ROI rectangle
-            self.canvas.Bind(wx.EVT_ENTER_WINDOW, self.ChangeCursor)
-            self.canvas.mpl_connect('button_press_event', self.draw_rectangle)
-            self.canvas.mpl_connect('button_release_event', self.on_release)
-            self.canvas.mpl_connect('motion_notify_event', self.on_motion)
+
+            ## Setting mechanism for drawing the ROI rectangle. Connect the
+            ## handlers once: reloading used to stack duplicate callbacks.
+            if not getattr(self, 'handlers_connected', False):
+                self.canvas.Bind(wx.EVT_ENTER_WINDOW, self.ChangeCursor)
+                self.canvas.mpl_connect('button_press_event', self.draw_rectangle)
+                self.canvas.mpl_connect('button_release_event', self.on_release)
+                self.canvas.mpl_connect('motion_notify_event', self.on_motion)
+                self.handlers_connected = True
             self.rect = Rectangle((0,0), 1, 1, fill=False, ec='r')
             self.axes[0].add_patch(self.rect)
 
             ## Auto-set GUI parameters from the video
+            n_frames = self.detector.n_frames
             self.input_blank_0.SetValue('0')
-            self.input_blank_n.SetValue(str(self.detector.n_frames))
+            self.input_blank_n.SetValue(str(n_frames))
             self.input_crop_0.SetValue('0')
-            self.input_crop_n.SetValue(str(self.detector.n_frames))
-            self.input_check_frame.SetValue('0')
+            self.input_crop_n.SetValue(str(n_frames))
             self.input_ecc_low.SetValue('0')
             self.input_ecc_high.SetValue('1')
-            self.input_ecc_high.SetValue('1')
-            self.input_path_project.SetValue(self.folder)
+            self.input_path_project.SetValue(self.folder.replace('\\', '/'))
             self.input_naming_convention.SetValue(self.name)
             self.input_vial_id_vars.SetValue(str(len(self.input_naming_convention.GetValue().split('_'))))
-            
-            ## Display the 0th and frame corresponding with (most likely) t = 2 seconds
+
+            ## Frame rate comes from the video itself (a wrong frame rate skews
+            ## every velocity); fall back to the text box if it is unavailable.
+            fps = getattr(self.detector, 'video_fps', None)
+            if fps:
+                self.input_frame_rate.SetValue(str(int(round(fps))) if abs(fps - round(fps)) < 0.01
+                                               else '%.3f' % fps)
             try:
-                self.input_frame_rate = int(self.input_frame_rate.GetValue())
-            except:
-                pass
-            if self.detector.n_frames < self.input_frame_rate*2:            
-                self.input_check_frame.SetValue(str(self.detector.n_frames))
-            
+                fps = float(self.input_frame_rate.GetValue())
+            except ValueError:
+                fps = 30.0
+
+            ## Check frame: about t = 2 seconds, or the last frame of a short video
+            self.input_check_frame.SetValue(str(int(min(fps * 2, n_frames - 1))))
+
             ## Try to make the local linear regression window size 2 seconds, but if not then 35% of the frames in the video
-            if self.detector.n_frames < self.input_frame_rate*2:
-                self.input_window.SetValue(str(int(len(self.detector.image_stack) * .35)))                
+            if n_frames < fps*2:
+                self.input_window.SetValue(str(int(n_frames * .35)))
             else:
-                self.input_window.SetValue(str(int(self.input_frame_rate)*2))
+                self.input_window.SetValue(str(int(fps*2)))
 
             ## Enable Test parameter button if disabled from prior testing
             self.button_test_parameters.Enable(True)
@@ -239,27 +328,40 @@ class main_gui(wx.Frame):
             ## Display the first frame of the video in the GUI
             self.update_ROIdisp()
             self.canvas.draw()
+            self.status_bar.SetStatusText(
+                'Loaded %s frames at %s fps. Draw the ROI with its bottom edge at or just '
+                'below the vial floor.' % (n_frames, self.input_frame_rate.GetValue()), 0)
         else:
             return
+
+    def report_error(self, what, error):
+        '''Show an error in the console, the status bar and a message box.'''
+        if isinstance(error, SystemExit):
+            detail = 'See the console for details.'
+        else:
+            detail = '%s: %s' % (type(error).__name__, error)
+            traceback.print_exc()
+        print('!! %s. %s' % (what, detail))
+        self.status_bar.SetStatusText('%s. %s' % (what, detail), 0)
+        wx.MessageBox('%s.\n\n%s' % (what, detail), 'FreeClimber', wx.OK | wx.ICON_ERROR, self)
 
     def update_names(self):
         '''Updates the names of variables within the program. Generally variables set for naming files.'''
         if args.debug: print('main_gui.update_names')
         self.status_bar.SetStatusText("Updating file names...",0)
         self.text_video_path.SetLabelText(self.video_file)
-        self.folder, self.name        = os.path.split(self.video_file)
-        self.name,   self.input_file_suffix = self.name.split('.')
+        ## splitext copes with names containing extra dots (or none)
+        self.folder, name = os.path.split(self.video_file)
+        self.name, suffix = os.path.splitext(name)
+        self.input_file_suffix = suffix.lstrip('.')
 
         ## Naming files to be generated
         self.name_noext  = os.path.join(self.folder,self.name)
-        self.path_data   = self.name_noext + '.raw.csv'
-        self.path_filter = self.name_noext + '.filter.csv'
-        self.path_plot   = self.name_noext + '.diag.png'
-        self.path_slope  = self.name_noext + '.slopes.csv'
         if args.debug: print('name:',self.name_noext,"+ file suffixes")
-                
+
         ## Set path_project default to the folder of the selected video file
-        if self.input_path_project == '': self.input_path_project = self.folder
+        if self.input_path_project.GetValue() == '':
+            self.input_path_project.SetValue(self.folder.replace('\\', '/'))
         return
         
     def check_specified_video(self):
@@ -271,7 +373,6 @@ class main_gui(wx.Frame):
             self.button_reload_video.Enable(True)
             self.button_test_parameters.Enable(True)
             self.update_names()
-            self.input_file_suffix = '.' + self.video_file.split('/')[-1].split('.')[-1]
             return True
         
         else:
@@ -287,28 +388,28 @@ class main_gui(wx.Frame):
 
     def draw_rectangle(self, event):
         '''Draw ROI rectangle'''
-        self.status_bar.SetStatusText("Draw rectangle from upper-left to lower-right",0)
+        self.status_bar.SetStatusText("Drag to draw the ROI rectangle",0)
         self.pressed = True
-        if self.checkBox_fixed_ROI.Enabled:
+        if self.checkBox_fixed_ROI.IsEnabled() and event.xdata is not None:
             try:
                 self.x0 = int(event.xdata)
                 self.y0 = int(event.ydata)
                 
                 ## If the fixed_ROI box is checked, handle values differently
                 if self.checkBox_fixed_ROI.GetValue():
-                    self.x1 = self.x0 + int(eval(self.input_w.GetValue()))
-                    self.y1 = self.y0 + int(eval(self.input_h.GetValue()))
+                    try:
+                        self.x1 = self.x0 + int(self.input_w.GetValue())
+                        self.y1 = self.y0 + int(self.input_h.GetValue())
+                    except ValueError:
+                        pass
                     self.rect.set_width(self.x1 - self.x0)
                     self.rect.set_height(self.y1 - self.y0)
                     self.rect.set_xy((self.x0, self.y0))
                     self.canvas.draw()
                 
                 ## Set the values in the GUI and program to drawn rectangle
-                self.input_x.SetValue(str(self.x0))
-                self.input_y.SetValue(str(self.y0))
-                self.input_h.SetValue(str(self.rect.get_height()))
-                self.input_w.SetValue(str(self.rect.get_width()))
-            except:
+                self.update_ROIdisp()
+            except (TypeError, ValueError):
                 pass
         return
 
@@ -316,7 +417,7 @@ class main_gui(wx.Frame):
         '''When mouse is on plot and button is released, redraw ROI rectangle, update ROI values'''
         self.status_bar.SetStatusText("Specify the detector parameters...",0)
         self.pressed = False
-        if self.checkBox_fixed_ROI.Enabled:
+        if self.checkBox_fixed_ROI.IsEnabled():
             if self.checkBox_fixed_ROI.GetValue():
                 pass
             else:
@@ -326,7 +427,7 @@ class main_gui(wx.Frame):
 
     def on_motion(self, event):
         '''If the mouse is on plot and if the mouse button is pressed, redraw ROI rectangle'''
-        if self.pressed & self.checkBox_fixed_ROI.Enabled & (not self.checkBox_fixed_ROI.GetValue()):
+        if self.pressed and self.checkBox_fixed_ROI.IsEnabled() and (not self.checkBox_fixed_ROI.GetValue()):
             # Redraw the rectangle
             self.redraw_rect(event)
             self.update_ROIdisp()
@@ -347,16 +448,25 @@ class main_gui(wx.Frame):
                 self.canvas.draw()
             else:
                 pass
-        except:
+        except (TypeError, ValueError):  # pointer outside the image (xdata None)
             pass
         return
 
     def update_ROIdisp(self):
-        '''Updates the ROI coordinates as the rectangle is drawn.'''
-        self.input_x.SetValue(str(self.x0))
-        self.input_y.SetValue(str(self.y0))
-        self.input_h.SetValue(str(int(self.y1) - int(self.y0)))
-        self.input_w.SetValue(str(int(self.x1) - int(self.x0)))
+        '''Updates the ROI coordinates as the rectangle is drawn. The rectangle
+        may be dragged in any direction and past the image edge, so the values
+        are normalised to the top-left corner and clipped to the image.'''
+        width = getattr(getattr(self, 'detector', None), 'width', None)
+        height = getattr(getattr(self, 'detector', None), 'height', None)
+        x0, x1 = sorted((int(self.x0), int(self.x1)))
+        y0, y1 = sorted((int(self.y0), int(self.y1)))
+        x0, y0 = max(0, x0), max(0, y0)
+        if width: x1 = min(x1, width)
+        if height: y1 = min(y1, height)
+        self.input_x.SetValue(str(x0))
+        self.input_y.SetValue(str(y0))
+        self.input_h.SetValue(str(max(0, y1 - y0)))
+        self.input_w.SetValue(str(max(0, x1 - x0)))
         return
 
     def OnButton_testParButton(self, event):
@@ -364,12 +474,18 @@ class main_gui(wx.Frame):
         if args.debug: print('main_gui.OnButton_testParButton')
         self.status_bar.SetStatusText("Testing parameters...",0)
 
+        if getattr(self, 'detector', None) is None:
+            self.report_error('No video loaded', ValueError('Browse to a video first'))
+            return
+
         #Prep the parameters
         variables = self.update_variables()
         self.checkBox_fixed_ROI.Enable(False)
 
-        ## Set up figure for plots
+        ## Set up figure for plots — clear() removes old axes/artists; gc.collect()
+        ## encourages immediate release of image arrays those artists held.
         self.figure.clear()
+        gc.collect()
         self.axes = [self.figure.add_subplot(231),
                      self.figure.add_subplot(232),
                      self.figure.add_subplot(233),
@@ -377,13 +493,20 @@ class main_gui(wx.Frame):
                      self.figure.add_subplot(235),
                      self.figure.add_subplot(236)]
 
-        ## Busy cursor while the main function runs
+        ## Busy cursor while the main function runs. Detection problems (e.g.
+        ## 'no spots post-filtering') raise SystemExit in the detector; show
+        ## them instead of silently leaving blank plots.
         wx.BeginBusyCursor()
         try:
             variables = variables + ['debug='+str(args.debug)]
             self.detector.parameter_testing(variables, self.axes)
-        finally:
+        except (Exception, SystemExit) as e:
             wx.EndBusyCursor()
+            self.checkBox_fixed_ROI.Enable(True)
+            self.figure.canvas.draw()
+            self.report_error('Parameter test failed', e)
+            return
+        wx.EndBusyCursor()
 
         ## Renders plots in the GUI
         self.figure.tight_layout()
@@ -403,47 +526,46 @@ class main_gui(wx.Frame):
         self.button_store_parameters.SetBackgroundColour(wx.Colour(241,241,241))
 
     def set_config_file(self):
-        '''Set path for the project folder'''
-        if args.debug: print('main_gui.OnButton_strParButton')
-        ## Figure out where to save configuration file
-        if os.path.isdir(self.input_path_project):
-            if not self.input_path_project.endswith('/'):
-                self.input_path_project = self.input_path_project + '/'
-            self.path_parameters = self.input_path_project + self.name + '.cfg'
+        '''Path of the configuration file: <project folder>/<video name>.cfg, or
+        beside the video when the project path is not an existing folder.'''
+        if args.debug: print('main_gui.set_config_file')
+        ## Read the text box each time (it used to be replaced by a string on
+        ## the first save, so later edits to the project path were ignored)
+        project = self.input_path_project.GetValue().strip()
+        if os.path.isdir(project):
+            self.path_parameters = os.path.join(project, self.name + '.cfg')
         else:
-            self.path_parameters = self.path_noext+'.cfg'
+            self.path_parameters = self.name_noext + '.cfg'
         return self.path_parameters
 
     def save_parameter(self):
-        if args.debug: print('main_gui.save_parameter')
         '''
         Save parameters as python list.
         New parameter sets appended to the config file.
         Each parameter sets come with a comment line, contain the datetime of analysis
         '''
+        if args.debug: print('main_gui.save_parameter')
 
         variables = self.update_variables()
-        try: self.input_path_project = self.input_path_project.GetValue()
-        except: pass
-
         self.path_parameters = self.set_config_file()
 
         ## Printing output to configuration file
         print('Saving parameters to:', self.path_parameters)
-        with open(self.path_parameters, 'w') as f:
-            print('## FreeClimber ##', file=f)
-        f.close()
-        
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open(self.path_parameters,'a') as f:
-            print('## Generated from file: '+self.video_file,file = f)
-            print('##     @ ' + now, file = f)
-            print('##',file = f)
-            print('## Analysis parameters:',file = f)
-            for item in variables:
-                print(item,file = f)
-        f.close()
+        try:
+            with open(self.path_parameters, 'w') as f:
+                print('## FreeClimber ##', file=f)
+                print('## Generated from file: '+self.video_file,file = f)
+                print('##     @ ' + now, file = f)
+                print('##',file = f)
+                print('## Analysis parameters:',file = f)
+                for item in variables:
+                    print(item,file = f)
+        except OSError as e:
+            self.report_error('Could not save the configuration', e)
+            return
         print("Configuration settings saved")
+        self.status_bar.SetStatusText('Configuration saved to %s' % self.path_parameters, 0)
         return
 
     def OnButton_Browse(self, event):
@@ -454,10 +576,11 @@ class main_gui(wx.Frame):
         if openFileDialog.ShowModal() == wx.ID_CANCEL:
             pass
         else:
+            ## load_video draws the first frame; the figure used to be cleared
+            ## afterwards, leaving a blank canvas after every Browse.
             self.video_file = openFileDialog.GetPath()
             self.update_names()
             self.load_video()
-        self.figure.clear()
         return
 
     def OnButton_LoadVideo(self,event):
@@ -479,15 +602,15 @@ class main_gui(wx.Frame):
         if args.debug: print('main_gui.initialize_controls')
         # Generated method, do not edit
         wx.Frame.__init__(self, id=wxID_text_title, name='', parent=prnt,
-              pos=wx.Point(100, 30), size=wx.Size(950, 759),
+              pos=wx.Point(100, 30), size=wx.Size(950, 795),
               style=wx.DEFAULT_FRAME_STYLE,
               title='FreeClimber')
-        self.SetClientSize(wx.Size(950, 737))
+        self.SetClientSize(wx.Size(950, 773))
 
         ######
         ## Inputs for ROI Rectangle
         self.panel1 = wx.Panel(id=wxID_panel_1, name='panel1',
-              parent=self, pos=wx.Point(0, 0), size=wx.Size(950, 231),
+              parent=self, pos=wx.Point(0, 0), size=wx.Size(950, 266),
               style=wx.TAB_TRAVERSAL)
        
         ## Step 1 boxes
@@ -722,9 +845,28 @@ class main_gui(wx.Frame):
               parent=self.panel1, pos=wx.Point(col5, 80), size=wx.Size(133, 22),
               style=0)
         self.input_vial_id_vars = wx.TextCtrl(id=wxID_input_vial_id_vars,
-              name=u'input_vial_id_vars', parent=self.panel1, pos=wx.Point(col5 + 130, 80), 
-              size=wx.Size(small_box_dimensions), style=0, value=u'2')  
-        
+              name=u'input_vial_id_vars', parent=self.panel1, pos=wx.Point(col5 + 130, 80),
+              size=wx.Size(small_box_dimensions), style=0, value=u'2')
+
+        ## Step 6: per-fly trajectory analysis (linking + tortuosity/meandering).
+        ## These two checkboxes write the analysis_mode / tortuosity_enabled keys
+        ## into the saved .cfg so the detector runs link_trajectories() and
+        ## compute_tortuosity() (both gated on individual mode in step_5).
+        self.text_step_6 = wx.StaticText(id=wx.ID_ANY,
+              label=u'Step 6: Trajectory analysis', name='text_step_6', parent=self.panel1,
+              pos=wx.Point(col5, 110),
+              size=wx.Size(190, 22), style=wx.ALIGN_LEFT)
+        self.input_analysis_individual = wx.CheckBox(id=wx.ID_ANY,
+              label=u'Individual mode (per-fly linking)', name=u'input_analysis_individual',
+              parent=self.panel1, pos=wx.Point(col5, 132), size=wx.Size(195, 22),
+              style=0)
+        self.input_analysis_individual.SetValue(False)
+        self.input_tortuosity_enabled = wx.CheckBox(id=wx.ID_ANY,
+              label=u'Tortuosity / meandering metrics', name=u'input_tortuosity_enabled',
+              parent=self.panel1, pos=wx.Point(col5, 154), size=wx.Size(195, 22),
+              style=0)
+        self.input_tortuosity_enabled.SetValue(False)
+
         self.text_path_project = wx.StaticText(id=wxID_text_path_project,
               label=u"Project path:", name='text_path_project',
               parent=self.panel1, pos=wx.Point(col4-45, 180), size=wx.Size(medium_box_dimensions),
@@ -734,10 +876,59 @@ class main_gui(wx.Frame):
               size=wx.Size(350,22), style=0, value='') 
 
 
+        ## Step 7: failure to climb (and the vial floor it is measured from)
+        row7 = 210
+        self.text_step_7 = wx.StaticText(id=wx.ID_ANY,
+              label=u'Step 7: Failure to climb', name='text_step_7', parent=self.panel1,
+              pos=wx.Point(col1, row7 + 3), size=wx.Size(150, 22), style=0)
+        self.text_ftc_height_cm = wx.StaticText(id=wx.ID_ANY,
+              label=u'Line (cm):', name='text_ftc_height_cm', parent=self.panel1,
+              pos=wx.Point(165, row7 + 3), size=wx.Size(60, 22), style=0)
+        self.input_ftc_height_cm = wx.TextCtrl(id=wx.ID_ANY,
+              name=u'input_ftc_height_cm', parent=self.panel1, pos=wx.Point(228, row7),
+              size=wx.Size(small_box_dimensions), style=0, value=u'')
+        self.input_ftc_height_cm.SetToolTip(
+              'A fly that never gets this high above the vial floor within the time '
+              'limit (and never falls) failed to climb. Blank = the top of the drawn '
+              'ROI box.')
+        self.text_ftc_window_sec = wx.StaticText(id=wx.ID_ANY,
+              label=u'Within (s):', name='text_ftc_window_sec', parent=self.panel1,
+              pos=wx.Point(275, row7 + 3), size=wx.Size(62, 22), style=0)
+        self.input_ftc_window_sec = wx.TextCtrl(id=wx.ID_ANY,
+              name=u'input_ftc_window_sec', parent=self.panel1, pos=wx.Point(340, row7),
+              size=wx.Size(small_box_dimensions), style=0, value=u'')
+        self.input_ftc_window_sec.SetToolTip(
+              'Time limit in seconds from the start of the cropped video. '
+              'Blank = the whole cropped video.')
+        self.text_flies_per_vial = wx.StaticText(id=wx.ID_ANY,
+              label=u'Flies / vial:', name='text_flies_per_vial', parent=self.panel1,
+              pos=wx.Point(390, row7 + 3), size=wx.Size(65, 22), style=0)
+        self.input_flies_per_vial = wx.TextCtrl(id=wx.ID_ANY,
+              name=u'input_flies_per_vial', parent=self.panel1, pos=wx.Point(458, row7),
+              size=wx.Size(90, 22), style=0, value=u'')
+        self.input_flies_per_vial.SetToolTip(
+              'Flies loaded per vial: one number for all vials, or a comma-separated '
+              'list left to right (e.g. 10,10,9). Lets flies the detector cannot see '
+              'still count. Blank = count detected flies only. A vials.txt "n =" line '
+              'overrides this per folder.')
+        self.text_floor_y = wx.StaticText(id=wx.ID_ANY,
+              label=u'Vial floor y (px):', name='text_floor_y', parent=self.panel1,
+              pos=wx.Point(560, row7 + 3), size=wx.Size(95, 22), style=0)
+        self.input_floor_y = wx.TextCtrl(id=wx.ID_ANY,
+              name=u'input_floor_y', parent=self.panel1, pos=wx.Point(658, row7),
+              size=wx.Size(medium_box_dimensions), style=0, value=u'')
+        self.input_floor_y.SetToolTip(
+              'Image y-coordinate of the vial floor, as read off the video axes. '
+              'Heights are measured from here. Blank = bottom edge of the ROI.')
+        self.text_ftc_hint = wx.StaticText(id=wx.ID_ANY,
+              label=u'(Test parameters draws the floor and line on the check frame)',
+              name='text_ftc_hint', parent=self.panel1,
+              pos=wx.Point(715, row7 + 3), size=wx.Size(230, 30), style=0)
+
         ## Bottom panels
         self.text_video_path = wx.StaticText(id=wxID_video_path,
               label='Video Path', name='text_video_path', parent=self.panel1,
-              pos=wx.Point(10, 205), size=wx.Size(930, 22), style=0)
+              pos=wx.Point(10, 240), size=wx.Size(930, 22), style=0)
         self.text_video_path.SetBackgroundColour(wx.Colour(241, 241, 241))
 
         self.button_test_parameters = wx.Button(id=wxID_test_parameters,
@@ -791,26 +982,14 @@ def startup():
     Returns:
       args (list): list of arguments passed to program
     '''
-    def print_line(line,line_length):
-        '''Formats line to print'''
-        if len(line) <= line_length: string = line + '#'*(line_length-len(line))
-        else: string = line
-        print(string)
-        return
-
-    line_length = 72
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    line0 = '#'*line_length
-    line1 = '## FreeClimber v.%s ' % str(version)
-    line2 = '## Please cite: %s ' % doi
-    line3 = "## Beginning program @ %s " % str(now)
-    line4 = line0
-
-    ## Printing formated lines
+    border = '#' * 72
     print('\n')
-    for item in range(5):
-        print_line(eval('line'+str(item)),line_length)
+    print(border)
+    print('FreeClimber-FNG v%s' % version)
+    print('Built on FreeClimber (Spierer et al., 2020)')
+    print('Please cite: https://doi.org/10.5281/zenodo.17647589')
+    print('Please cite: https://doi.org/10.1242/jeb.229377')
+    print(border)
 
     args = define_argument_parser()
     return args

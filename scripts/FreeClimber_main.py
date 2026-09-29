@@ -8,13 +8,14 @@
 
 
 ## Version number
-version='0.4.0'
+version='1.0.4'
 doi =  'https://doi.org/10.1242/jeb.229377' ## Link to published paper
 
 ## Importing external package(s)
 import os
 import sys
 import argparse
+import traceback
 from time import time,ctime
 from datetime import datetime
 from pandas import read_csv, concat
@@ -23,7 +24,7 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import Greys_r
 
 ## Importing local module(s)
-import detector as detector
+import detector_fng as detector
 
 class FreeClimber(object):
     def __init__(self, config_file):
@@ -39,6 +40,7 @@ class FreeClimber(object):
 
         ## Basic variables
         self.count = 0
+        self.n_completed = 0
         self.first_run = True
         return
             
@@ -55,10 +57,17 @@ class FreeClimber(object):
         ## Filter lines with '#', ' ', and carriage returns
         variables = [item.rstrip() for item in variables if not item.startswith(('#',' ','\n'))]
         
-        ## Assign variables to the detector, pass if unable to.
+        ## Assign variables using the detector's shared allowlist and parser
+        ## (path values such as path_project are kept verbatim, so Windows
+        ## backslashes are not turned into escape characters).
         for item in variables:
-            try: exec('self.'+item)
-            except: pass
+            try:
+                parsed = detector.parse_config_line(item)
+            except ValueError:
+                key, _, val_str = item.partition('=')
+                parsed = (key.strip(), val_str.strip())
+            if parsed is not None:
+                setattr(self, parsed[0], parsed[1])
         return
 
     ## Reading file with video paths for --process_custom argument
@@ -80,8 +89,9 @@ class FreeClimber(object):
         f.close()
 
         ## Checks individual files are real
+        lines = [line for line in lines if line.strip() != '' and not line.startswith('#')]
         _lines = [vid for vid in lines if os.path.isfile(vid)]
-        print('----> %s of %s specified files have valid paths' % (len(lines),len(lines)))
+        print('----> %s of %s specified files have valid paths' % (len(_lines),len(lines)))
         return _lines
     
     def get_filelist(self):
@@ -125,37 +135,36 @@ class FreeClimber(object):
         ----
         Inputs:
           folder (str): Parent folder to search through
-          endswith (str): Suffix of a common file type
-          undone (bool): False finds all files with the 'endswith' suffix. 
-                         True does the same, but excludes '.slopes.csv' files (processed)
+          endswith (str): Suffix of a common file type, matched case-insensitively
+                          (so 'mov' finds both .mov and .MOV)
+          undone (bool): False finds all files with the 'endswith' suffix.
+                         True does the same, but excludes videos that already
+                         have a '.slopes.csv' file (processed)
         ----
         Returns:
           _list (list): sorted list of all file paths with a common suffix in a parent folder
         '''
         if self.args.debug: print('FreeClimber.file_walker')
-        
-        _list1,_list2 = [],[]
+
+        suffix = str(endswith).lower()
+        _list1,done = [],set()
         for root, dirs, files in os.walk(folder):
             for name in files:
-                if name.endswith(endswith):
+                if name.lower().endswith(suffix):
                     _list1.append((os.path.join(root, name)))
-                if undone:
-                    if name.endswith('.slopes.csv'):
-                        _list2.append(os.path.join(root, name[:-11])+'.'+endswith)
+                if undone and name.lower().endswith('.slopes.csv'):
+                    done.add(os.path.join(root, name[:-len('.slopes.csv')]))
 
         ## Return a sorted list of all files with the file suffix
-        if undone == False:
-            _list = sorted(unique(_list1))
-            return _list
+        if not undone:
+            return sorted(unique(_list1))
 
-        ## Return a sorted list of all undone files            
-        if undone:
-            _list1,_list2 = set(_list1),set(_list2)
-            _list = list(_list1.difference(_list2))
-            _list = sorted(	_list)
-            if len(_list) == 0:
-                print('All files previously processed, re-evaluate your inputs if this message is a surprise.')
-            return 	_list
+        ## Return a sorted list of all undone files (compared on the path
+        ## without extension, so the suffix case does not matter)
+        _list = sorted(f for f in set(_list1) if os.path.splitext(f)[0] not in done)
+        if len(_list) == 0:
+            print('All files previously processed, re-evaluate your inputs if this message is a surprise.')
+        return _list
 
     def timer(self, time_begin):
         '''Timer for measuring each video's processing time'''
@@ -202,23 +211,40 @@ class FreeClimber(object):
         return
 
     def concat_slopes(self):
-        '''Concatenate the .slopes.csv files into a single results.csv file in path_project folder'''
-        if self.args.debug: print('FreeClimber.concat_slopes')        
+        '''Concatenate the per-video result files in path_project into project-level files:
+          .slopes.csv -> results.csv
+          .fng.csv    -> fng_results.csv  (with a 'video' column)
+          .ftc.csv    -> ftc_results.csv  (with a 'video' column)'''
+        if self.args.debug: print('FreeClimber.concat_slopes')
 
-        ## Finds all files with the .slopes.csv suffix
-        print("\nFinal step: Concatenating slope files")
-        slope_files = self.file_walker(self.path_project,endswith='.slopes.csv')
-        to_concat = [slope_file for slope_file in slope_files]
-        if self.args.debug: print(to_concat)
-        
-        ## Concatenates contents of files into a single DataFrame
-        print("    - Concatenating",len(to_concat),"files")
-        self.slopes = concat([read_csv(item) for item in to_concat])
-        
-        ## Saves results.csv file to the path_project folder (specified in the configuration file)
-        self.path_result = self.path_project+'results.csv'
-        print("    - Saving:", self.path_result)
-        self.slopes.to_csv(self.path_result,index=False)
+        print("\nFinal step: Concatenating result files")
+        outputs = [('.slopes.csv', 'results.csv', False),
+                   ('.fng.csv', 'fng_results.csv', True),
+                   ('.ftc.csv', 'ftc_results.csv', True)]
+        for suffix, result_name, add_video in outputs:
+            to_concat = self.file_walker(self.path_project, endswith=suffix)
+            if self.args.debug: print(to_concat)
+            frames = []
+            for item in to_concat:
+                try:
+                    df = read_csv(item)
+                except Exception as e:  # e.g. an empty file from a failed run
+                    print('    !! Could not read %s (%s)' % (item, e))
+                    continue
+                if add_video:
+                    df.insert(0, 'video', os.path.basename(item)[:-len(suffix)])
+                frames.append(df)
+            if not frames:
+                print("    - No %s files found; %s not written" % (suffix, result_name))
+                continue
+
+            ## Saves the file to the path_project folder (specified in the configuration file)
+            path_result = os.path.join(self.path_project, result_name)
+            print("    - Concatenating %s %s files -> %s" % (len(frames), suffix, path_result))
+            combined = concat(frames)
+            combined.to_csv(path_result, index=False)
+            if suffix == '.slopes.csv':
+                self.slopes, self.path_result = combined, path_result
         return
 
     def create_log_header(self):
@@ -226,11 +252,11 @@ class FreeClimber(object):
         if self.args.debug: print('FreeClimber.create_log_header')
     
         try:
-            os.mkdir(self.path_project + 'log/')
+            os.mkdir(os.path.join(self.path_project, 'log'))
         except:
             pass
-        self.path_completed = self.path_project + 'log/completed.log'
-        self.path_skipped = self.path_project + 'log/skipped.log'
+        self.path_completed = os.path.join(self.path_project, 'log', 'completed.log')
+        self.path_skipped = os.path.join(self.path_project, 'log', 'skipped.log')
         path_list,text_list = [self.path_completed,self.path_skipped],['completed','skipped']
         time_stamp = str(ctime())
                 
@@ -276,9 +302,9 @@ class FreeClimber(object):
 #         elif review != None: path = '/review_at_R_%s/review.log' % self.review_R
         
         ## Appends the video_file path to the log file
-        if ~completed:
+        if not completed:
             print('Appending to',path + ': ',file_name)
-        with open(self.path_project + '/' + path,'a') as f:
+        with open(os.path.join(self.path_project, path),'a') as f:
             print(file_name,file = f)
         f.close()
         return
@@ -290,9 +316,9 @@ class FreeClimber(object):
         
         print('\nVideo processing complete!\n')
         print('Total videos: %s' % len(self.file_list))
-## Upcoming added functionality to output the number of videos processed vs initially input
-#         print('Processed   : %s')
-#         print('Unprocessed : %s ... see ## FILE PATH ##')
+        print('Processed   : %s' % self.n_completed)
+        print('Skipped     : %s ... see %s' % (len(self.file_list) - self.n_completed,
+                                               os.path.join(self.path_project, 'log', 'skipped.log')))
         return
 
 
@@ -416,27 +442,14 @@ def check_config(args):
     
 def startup():
     '''Function prints top line and runs argument parsing function.'''
-    line_length = 72
-    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-    def print_line(line,line_length):
-        '''Formats line to print'''
-        if len(line) <= line_length: string = line + '#'*(line_length-len(line))
-        else: string = line
-        print(string)
-        return
-
-    ## Lines to print
-    line0 = '#'*line_length
-    line1 = '## FreeClimber v.%s ' % str(version)
-    line2 = '## Please cite: %s' % doi
-    line3 = "## Beginning program @ %s " % str(now)
-    line4 = line0
-    
-    ## Printing formated lines
+    border = '#' * 72
     print('\n')
-    for item in range(5):
-        print_line(eval('line'+str(item)),line_length)
+    print(border)
+    print('FreeClimber-FNG v%s' % version)
+    print('Built on FreeClimber (Spierer et al., 2020)')
+    print('Please cite: https://doi.org/10.5281/zenodo.17647589')
+    print('Please cite: https://doi.org/10.1242/jeb.229377')
+    print(border)
     return         
 
 def main():
@@ -455,28 +468,29 @@ def main():
     fc.create_log_header()
 
     for File in fc.file_list:
+        t0 = time()
+        fc.count += 1
+        fc.name = os.path.split(File)[-1]
         if args.debug:
+            ## No guard in debug mode: stop at the first failure with a full traceback
             print(File)
-            if 1==1:
-                t0 = time()
-                fc.count += 1
-                fc.name = os.path.split(File)[-1]
-                fc.process(video_file = File,variables = None, config_file = fc.config_file)
-                fc.timer(t0)
-                fc.log_video(completed=True, file_name = File)
-            else:
-                fc.log_video(completed=False, file_name = File)    
-            
+            fc.process(video_file = File,variables = None, config_file = fc.config_file)
         else:
+            ## Skip a failing video and keep going, but say why it failed.
+            ## SystemExit is raised by the detector for 'skip this video'
+            ## conditions (its message is already printed); Ctrl+C
+            ## (KeyboardInterrupt) still stops the whole batch.
             try:
-                t0 = time()
-                fc.count += 1
-                fc.name = os.path.split(File)[-1]
                 fc.process(video_file = File,variables = None, config_file = fc.config_file)
-                fc.timer(t0)
-                fc.log_video(completed=True, file_name = File)
-            except:
-                fc.log_video(completed=False, file_name = File)    
+            except (Exception, SystemExit) as e:
+                if not isinstance(e, SystemExit):
+                    print('!! %s: %s' % (type(e).__name__, e))
+                    print(''.join(traceback.format_exception(type(e), e, e.__traceback__)[-3:]))
+                fc.log_video(completed=False, file_name = File)
+                continue
+        fc.timer(t0)
+        fc.n_completed += 1
+        fc.log_video(completed=True, file_name = File)
 
     ## Concatenate slopes of all .slopes.csv files into a single, results.csv file
     if args.no_concat == False:

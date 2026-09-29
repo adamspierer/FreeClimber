@@ -4,14 +4,14 @@ from setuptools import setup, find_packages
 with open('README.md','r') as f:
     long_description = f.read()
 
-setup(name='FreeClimber',
+setup(name='FreeClimber-FNG',
       version='0.4.0',
-      description='FreeClimber is a Python-based background subtraction, particle detector used to estimate the velocity for a group of particles moving from the bottom to the top of an image, using a local linear regression.',
+      description='FreeClimber-FNG is a fork of FreeClimber adding fast negative geotaxis (FNG) event detection to the Python-based background subtraction and climbing velocity estimation pipeline.',
       long_description=long_description,
       long_description_content_type="text/markdown",
-      url='http://github.com/adamspierer/FreeClimber',
-      
-      author='Adam Spierer',
+      url='https://github.com/jordanvasu/FreeClimber-FNG',
+
+      author='Jordan Vasu',
       author_email='anspierer+Github_setup_py@gmail.com',
       license='MIT',
 

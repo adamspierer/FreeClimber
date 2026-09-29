@@ -1,0 +1,3 @@
+freeclimber,fng,validation,video,vial_ID,first_frame,last_frame,slope,intercept,r_value,p_value,std_err
+freeclimber,fng,validation,vide,freeclimber_fng_validation__1,55,105,4.7428,-208.1572,0.9998,0.0,0.0121
+freeclimber,fng,validation,vide,freeclimber_fng_validation__all,55,105,4.7428,-208.1572,0.9998,0.0,0.0121

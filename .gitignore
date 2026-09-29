@@ -1,2 +1,5 @@
 .venv
 .vscode
+.claude/
+test_fng_recovery.py
+diagnose_bug*.py

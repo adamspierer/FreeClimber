@@ -104,7 +104,7 @@ def file_walker(folder = None, endswith = None, undone = None):
         _list = [item+'.'+endswith for item in _list]
         _list = sorted(_list)
         
-        if ~len(_list):
+        if not len(_list):
             print('All files previously processed, re-evaluate your inputs if this message is a surprise.')
         return _list
 
